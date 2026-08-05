@@ -159,6 +159,7 @@
     background:#fff;border-radius:10px;width:100%;max-width:520px;max-height:85vh;
     display:flex;flex-direction:column;overflow:hidden;
   }
+  .modal-box.modal-wide{ max-width:900px; }
   .modal-header{
     display:flex;align-items:center;justify-content:space-between;
     padding:16px 20px;border-bottom:1px solid var(--line);
@@ -173,6 +174,17 @@
     padding:8px 10px;cursor:pointer;font-size:12.5px;border-bottom:1px solid #f0f1f3;
   }
   .modal-result-item:last-child{border-bottom:none;}
+  .cube-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px;}
+  .cube-tile{
+    background:var(--accent-bg);border:1.5px solid var(--line);border-radius:10px;
+    padding:18px 16px;cursor:pointer;transition:all .15s;text-align:center;
+    display:flex;flex-direction:column;align-items:center;gap:8px;
+    min-height:110px;justify-content:center;
+  }
+  .cube-tile:hover{border-color:var(--navy);background:#eef2fb;box-shadow:0 2px 10px rgba(30,56,136,.1);}
+  .cube-tile .cube-icon{font-size:26px;}
+  .cube-tile .cube-label{font-size:13px;font-weight:700;color:var(--navy);}
+  .cube-tile .cube-badge{font-size:11px;color:var(--sub);}
   .modal-result-item:hover{background:var(--bg);}
   .modal-result-item .rname{font-weight:500;color:var(--text);}
   .modal-result-item .raddr{color:var(--sub);font-size:11.5px;margin-top:2px;}
@@ -316,6 +328,7 @@
   </div>
 
   <div class="tab-panel active" id="panel-basic">
+    <!-- 카드 1: 인적사항 -->
     <div class="card">
       <h2>인적사항</h2>
       <div class="grid">
@@ -331,35 +344,122 @@
           <label>휴대전화</label>
           <input type="text" id="debtorPhone" placeholder="010-0000-0000">
         </div>
-        <div class="field wide">
-          <label>주민등록상 주소</label>
-          <div style="display:flex;gap:6px;">
-            <input type="text" id="debtorRegAddr" placeholder="주민등록상 주소" style="flex:1;">
-            <button type="button" class="btn btn-sm" id="btnPostcode" style="flex-shrink:0;">우편번호 검색</button>
-          </div>
+        <div class="field">
+          <label>최종학력 - 학교명</label>
+          <input type="text" id="debtorEduSchool" placeholder="예: 은오대학교">
         </div>
         <div class="field">
-          <label>우편번호</label>
-          <input type="text" id="debtorZip" placeholder="00000">
+          <label>최종학력 - 졸업(중퇴)일자</label>
+          <input type="text" id="debtorEduDate" placeholder="26/2/1">
         </div>
-        <div class="field wide">
-          <label>현 거주지</label>
-          <input type="text" id="debtorCurrentAddr" placeholder="실제 거주지 주소">
-        </div>
-        <div class="field" style="display:flex;align-items:flex-end;">
-          <label style="display:flex;align-items:center;gap:6px;font-weight:500;color:var(--text);margin-bottom:9px;cursor:pointer;">
-            <input type="checkbox" id="sameAddr" style="width:auto;">
-            주민등록상 주소와 동일(상동)
-          </label>
+        <div class="field">
+          <label>최종학력 - 구분</label>
+          <select id="debtorEduStatus">
+            <option value="졸업">졸업</option>
+            <option value="중퇴">중퇴</option>
+          </select>
         </div>
       </div>
+    </div>
 
-      <details id="housingDetails" style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px;">
-        <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--navy);">
-          거주지 상세내역 <span class="badge" id="housingCount">0건</span> <span style="font-weight:400;color:var(--sub);font-size:11.5px;">(클릭하여 펼치기/접기)</span>
-        </summary>
-        <div style="margin-top:12px;">
-          <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+
+    <!-- 큐브 그리드 -->
+    <div class="card" style="padding-bottom:16px;">
+      <div class="cube-grid">
+        <div class="cube-tile" id="cubeCareer">
+          <div class="cube-icon">💼</div>
+          <div class="cube-label">이력사항</div>
+          <div class="cube-badge">경력 <span id="stmtCareerCount">0</span>건</div>
+        </div>
+        <div class="cube-tile" id="cubeHousing">
+          <div class="cube-icon">🏠</div>
+          <div class="cube-label">거주지</div>
+          <div class="cube-badge">상세 <span id="housingCount">0</span>건</div>
+        </div>
+        <div class="cube-tile" id="cubeFamily">
+          <div class="cube-icon">👨‍👩‍👧</div>
+          <div class="cube-label">가족관계</div>
+          <div class="cube-badge">구성원 <span id="familyCount">0</span>건</div>
+        </div>
+        <div class="cube-tile" id="cubeMarriage">
+          <div class="cube-icon">💍</div>
+          <div class="cube-label">혼인관계</div>
+          <div class="cube-badge">이력 <span id="marriageCount">0</span>건</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 이력사항(경력) 모달 -->
+  <div class="modal-overlay" id="careerModalOverlay">
+    <div class="modal-box modal-wide">
+      <div class="modal-header">
+        <h3>💼 이력사항 (과거~현재 경력)</h3>
+        <button class="modal-close" id="careerModalClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="note" style="margin-bottom:10px;">과거에 그만둔 곳 포함 모든 경력을 입력하세요. 현재 직장·사업은 수입·지출 탭에서 따로 연동됩니다.</div>
+        <div style="overflow-x:auto;">
+          <table class="debt-table" id="stmtCareerTable">
+            <thead>
+              <tr>
+                <th style="width:100px;">기간 시작</th>
+                <th style="width:100px;">기간 종료</th>
+                <th style="width:70px;">현재까지</th>
+                <th style="min-width:90px;">업종</th>
+                <th style="min-width:110px;">직장명·상호</th>
+                <th style="min-width:80px;">직위</th>
+                <th style="width:90px;">구분</th>
+                <th style="width:40px;"></th>
+              </tr>
+            </thead>
+            <tbody id="stmtCareerBody"></tbody>
+          </table>
+        </div>
+        <div class="table-actions">
+          <button class="btn btn-sm" id="btnAddStmtCareer">+ 경력 추가</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-sm btn-dark" id="careerModalDone">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 거주지 모달 -->
+  <div class="modal-overlay" id="housingModalOverlay">
+    <div class="modal-box modal-wide">
+      <div class="modal-header">
+        <h3>🏠 거주지</h3>
+        <button class="modal-close" id="housingModalClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="grid">
+          <div class="field wide">
+            <label>주민등록상 주소</label>
+            <div style="display:flex;gap:6px;">
+              <input type="text" id="debtorRegAddr" placeholder="주민등록상 주소" style="flex:1;">
+              <button type="button" class="btn btn-sm" id="btnPostcode" style="flex-shrink:0;">우편번호 검색</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>우편번호</label>
+            <input type="text" id="debtorZip" placeholder="00000">
+          </div>
+          <div class="field wide">
+            <label>현 거주지</label>
+            <input type="text" id="debtorCurrentAddr" placeholder="실제 거주지 주소">
+          </div>
+          <div class="field" style="display:flex;align-items:flex-end;">
+            <label style="display:flex;align-items:center;gap:6px;font-weight:500;color:var(--text);margin-bottom:9px;cursor:pointer;">
+              <input type="checkbox" id="sameAddr" style="width:auto;">
+              주민등록상 주소와 동일(상동)
+            </label>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--line);margin-top:14px;padding-top:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <span style="font-size:13px;font-weight:600;color:var(--navy);">거주지 상세내역</span>
             <button class="btn btn-sm" id="btnPrintHousing" type="button">거주정보 인쇄</button>
           </div>
           <div style="overflow-x:auto;">
@@ -369,14 +469,14 @@
                   <th style="width:30px;"></th>
                   <th style="width:40px;">#</th>
                   <th style="width:70px;">현재거주</th>
-                  <th style="min-width:200px;">주소</th>
-                  <th style="width:100px;">우편번호</th>
-                  <th style="width:100px;">거주형태</th>
-                  <th style="width:120px;">보증금</th>
-                  <th style="width:110px;">월 차임료</th>
-                  <th style="width:120px;">거주 시작일</th>
-                  <th style="width:120px;">거주 종료일</th>
-                  <th style="min-width:110px;">비고</th>
+                  <th style="min-width:180px;">주소</th>
+                  <th style="width:90px;">우편번호</th>
+                  <th style="width:90px;">거주형태</th>
+                  <th style="width:110px;">보증금</th>
+                  <th style="width:100px;">월 차임료</th>
+                  <th style="width:110px;">거주 시작일</th>
+                  <th style="width:110px;">거주 종료일</th>
+                  <th style="min-width:100px;">비고</th>
                   <th style="width:40px;"></th>
                 </tr>
               </thead>
@@ -385,45 +485,51 @@
           </div>
           <div class="table-actions">
             <button class="btn btn-sm" id="btnAddHousing">+ 거주정보 추가</button>
-            <div class="note">위쪽 "주민등록상 주소/현 거주지"는 서류에 바로 쓰이는 요약 정보이고, 여기는 보정 대응용 상세 이력(5년치 등)입니다. 두 곳은 서로 자동 연동되지 않으니 각각 입력해주세요. 거주 종료일을 비워두면 "현재까지"로 인쇄됩니다. 순서는 ⠿ 아이콘을 끌어서 바꿀 수 있습니다.</div>
+            <div class="note">거주 종료일을 비워두면 "현재까지"로 인쇄됩니다.</div>
           </div>
         </div>
-      </details>
-    </div>
-
-    <div class="card">
-      <h2>가족관계</h2>
-      <div style="font-size:12.5px;font-weight:600;color:var(--navy);margin-bottom:8px;">가족구성원 <span class="badge" id="familyCount">0건</span></div>
-      <div style="overflow-x:auto;">
-        <table class="debt-table" id="familyTable">
-          <thead>
-            <tr>
-              <th style="width:40px;">#</th>
-              <th style="width:100px;">관계</th>
-              <th style="min-width:110px;">성명</th>
-              <th style="width:130px;">생년월일</th>
-              <th style="min-width:100px;">직업</th>
-              <th style="width:90px;">동거기간</th>
-              <th style="width:40px;"></th>
-            </tr>
-          </thead>
-          <tbody id="familyBody"></tbody>
-        </table>
       </div>
-      <div class="table-actions">
-        <button class="btn btn-sm" id="btnAddFamily">+ 가족 추가</button>
-        <div class="note">동거여부·부양여부는 수입·지출 탭에서 설정합니다. 여기 입력한 가족은 수입·지출 탭(가구원수 등)과 보험현황(배우자 보험)에서 그대로 활용됩니다.</div>
+      <div class="modal-footer">
+        <button class="btn btn-sm btn-dark" id="housingModalDone">닫기</button>
       </div>
-
-      <div style="height:1px;background:var(--line);margin:18px 0;"></div>
-
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <div style="font-size:12.5px;font-weight:600;color:var(--navy);">혼인이력 <span class="badge" id="marriageCount">0건</span></div>
-        <button class="btn btn-sm" id="btnOpenMarriageModal" type="button">혼인이력 관리</button>
-      </div>
-      <div class="note" style="margin-top:6px;">혼인·이혼·재혼·사별 이력은 별도 창에서 입력합니다.</div>
     </div>
   </div>
+
+  <!-- 가족관계 모달 -->
+  <div class="modal-overlay" id="familyModalOverlay">
+    <div class="modal-box modal-wide">
+      <div class="modal-header">
+        <h3>👨‍👩‍👧 가족관계</h3>
+        <button class="modal-close" id="familyModalClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="overflow-x:auto;">
+          <table class="debt-table" id="familyTable">
+            <thead>
+              <tr>
+                <th style="width:40px;">#</th>
+                <th style="width:100px;">관계</th>
+                <th style="min-width:110px;">성명</th>
+                <th style="width:130px;">생년월일</th>
+                <th style="min-width:100px;">직업</th>
+                <th style="width:90px;">동거기간</th>
+                <th style="width:40px;"></th>
+              </tr>
+            </thead>
+            <tbody id="familyBody"></tbody>
+          </table>
+        </div>
+        <div class="table-actions">
+          <button class="btn btn-sm" id="btnAddFamily">+ 가족 추가</button>
+          <div class="note">동거여부·부양여부는 수입·지출 탭에서 설정합니다.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-sm btn-dark" id="familyModalDone">닫기</button>
+      </div>
+    </div>
+  </div>
+
 
   <div class="tab-panel" id="panel-creditors">
     <div class="card">
@@ -507,18 +613,123 @@
       </div>
     </div>
 
+    <!-- 재산항목 큐브 그리드 (3행 × 4열) -->
+    <div class="card" style="padding-bottom:16px;">
+      <div style="font-size:12px;color:var(--sub);margin-bottom:8px;">항목을 클릭하면 상세 입력 창이 열립니다.</div>
+      <div class="cube-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="cube-tile" id="cubeCash">
+          <div class="cube-icon">💰</div>
+          <div class="cube-label">현금</div>
+          <div class="cube-badge"><span class="cube-amount" id="cube_cashDisplay">0원</span></div>
+        </div>
+        <div class="cube-tile" id="cubeDeposit">
+          <div class="cube-icon">🏦</div>
+          <div class="cube-label">예금</div>
+          <div class="cube-badge"><span class="cube-badge-count" id="depositCount">0</span>건 · <span class="cube-amount" id="cube_depositSumDisplay">0원</span></div>
+        </div>
+        <div class="cube-tile" id="cubeInsurance">
+          <div class="cube-icon">📋</div>
+          <div class="cube-label">보험</div>
+          <div class="cube-badge"><span class="cube-badge-count" id="insuranceCount">0</span>건 · <span class="cube-amount" id="cube_insuranceSumDisplay">0원</span></div>
+        </div>
+        <div class="cube-tile" id="cubeVehicle">
+          <div class="cube-icon">🚗</div>
+          <div class="cube-label">자동차</div>
+          <div class="cube-badge"><span class="cube-badge-count" id="vehicleCount">0</span>건 · <span class="cube-amount" id="cube_vehicleSumDisplay">0원</span></div>
+        </div>
+        <div class="cube-tile" id="cubeLease">
+          <div class="cube-icon">🔑</div>
+          <div class="cube-label">임차보증금</div>
+          <div class="cube-badge"><span class="cube-badge-count" id="leaseCount">0</span>건 · <span class="cube-amount" id="cube_leaseSumDisplay">0원</span></div>
+        </div>
+        <div class="cube-tile" id="cubeRealty">
+          <div class="cube-icon">🏢</div>
+          <div class="cube-label">부동산</div>
+          <div class="cube-badge"><span class="cube-badge-count" id="realtyCount">0</span>건 · <span class="cube-amount" id="cube_realtySumDisplay">0원</span></div>
+        </div>
+        <div class="cube-tile" id="cubeEquip">
+          <div class="cube-icon">🔧</div>
+          <div class="cube-label">사업용 설비</div>
+          <div class="cube-badge"><span class="cube-badge-count" id="equipCount">0</span>건 · <span class="cube-amount" id="cube_equipSumDisplay">0원</span></div>
+        </div>
+        <div class="cube-tile" id="cubeLoanRec">
+          <div class="cube-icon">📄</div>
+          <div class="cube-label">대여금 채권</div>
+          <div class="cube-badge"><span class="cube-badge-count" id="loanReceivableCount">0</span>건 · <span class="cube-amount" id="cube_loanRecSumDisplay">0원</span></div>
+        </div>
+        <div class="cube-tile" id="cubeSalesRec">
+          <div class="cube-icon">📑</div>
+          <div class="cube-label">매출금 채권</div>
+          <div class="cube-badge"><span class="cube-badge-count" id="salesReceivableCount">0</span>건 · <span class="cube-amount" id="cube_salesRecSumDisplay">0원</span></div>
+        </div>
+        <div class="cube-tile" id="cubeSeverance">
+          <div class="cube-icon">💼</div>
+          <div class="cube-label">예상 퇴직금</div>
+          <div class="cube-badge"><span class="cube-amount" id="cube_severanceDisplay">0원</span></div>
+        </div>
+        <div class="cube-tile" id="cubeOther">
+          <div class="cube-icon">📦</div>
+          <div class="cube-label">기타 재산</div>
+          <div class="cube-badge"><span class="cube-badge-count" id="otherCount">0</span>건 · <span class="cube-amount" id="cube_otherSumDisplay">0원</span></div>
+        </div>
+        <div class="cube-tile" id="cubeExemption">
+          <div class="cube-icon">🛡️</div>
+          <div class="cube-label">면제재산</div>
+          <div class="cube-badge"><span class="cube-badge-count" id="exemptionCount">0</span>건 · <span class="cube-amount" id="cube_exemptionSumDisplay">0원</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 합계 카드 -->
     <div class="card">
-      <h2>현금</h2>
+      <h2>합계</h2>
+      <div class="summary-strip" style="grid-template-columns:repeat(3,1fr);">
+        <div class="box">
+          <div class="label">재산목록 합계</div>
+          <div class="value" id="assetTotalDisplay">0원</div>
+        </div>
+        <div class="box">
+          <div class="label">면제재산 결정신청 금액</div>
+          <div class="value" id="exemptionDisplay">0원</div>
+        </div>
+        <div class="box">
+          <div class="label">청산가치</div>
+          <div class="value" id="liquidationValueDisplay">0원</div>
+        </div>
+      </div>
+      <div class="note">청산가치 = 재산목록 합계 - 면제재산 결정신청 금액. 채권자목록 탭의 채무 총액과 함께 변제계획안 작성 시 사용됩니다.</div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="cashModalOverlay">
+    <div class="modal-box modal-wide">
+      <div class="modal-header">
+        <h3>💰 현금</h3>
+        <button class="modal-close" id="cashModalClose">&#x2715;</button>
+      </div>
+      <div class="modal-body">
+<h2>현금</h2>
       <div class="grid g2">
         <div class="field">
           <label>현금 보유액</label>
           <input type="text" id="assetCash" placeholder="0">
         </div>
       </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-sm btn-dark" id="cashModalDone">닫기</button>
+      </div>
     </div>
+  </div>
 
-    <div class="card">
-      <h2>예금 <span class="badge" id="depositCount">0건</span></h2>
+  <div class="modal-overlay" id="depositModalOverlay">
+    <div class="modal-box modal-wide">
+      <div class="modal-header">
+        <h3>🏦 예금</h3>
+        <button class="modal-close" id="depositModalClose">&#x2715;</button>
+      </div>
+      <div class="modal-body">
+<h2>예금 <span class="badge" id="modal_depositCount">0건</span></h2>
       <div style="overflow-x:auto;">
         <table class="debt-table" id="depositTable">
           <thead>
@@ -537,11 +748,22 @@
         <button class="btn btn-sm" id="btnAddDeposit">+ 예금 추가</button>
         <div class="note">잔고 합계 중 250만원까지는 압류금지채권으로 재산목록 합계에서 자동 공제됩니다. 현재 예금 합계: <span id="depositSumDisplay">0원</span> → 재산 반영액: <span id="depositNetDisplay">0원</span></div>
       </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-sm btn-dark" id="depositModalDone">닫기</button>
+      </div>
     </div>
+  </div>
 
-    <div class="card">
-      <h2>
-        <span>보험 <span class="badge" id="insuranceCount">0건</span></span>
+  <div class="modal-overlay" id="insuranceModalOverlay">
+    <div class="modal-box modal-wide">
+      <div class="modal-header">
+        <h3>📋 보험</h3>
+        <button class="modal-close" id="insuranceModalClose">&#x2715;</button>
+      </div>
+      <div class="modal-body">
+<h2>
+        <span>보험 <span class="badge" id="modal_insuranceCount">0건</span></span>
         <button class="btn btn-sm" id="btnPrintInsurance" type="button">보험현황 인쇄</button>
       </h2>
       <div style="overflow-x:auto;">
@@ -568,10 +790,21 @@
         <button class="btn btn-sm" id="btnAddInsurance">+ 보험 추가</button>
         <div class="note">해약환급금 합계 중 250만원까지는 압류금지채권으로 자동 공제됩니다. 현재 해약환급금 합계: <span id="insuranceSumDisplay">0원</span> → 재산 반영액: <span id="insuranceNetDisplay">0원</span></div>
       </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-sm btn-dark" id="insuranceModalDone">닫기</button>
+      </div>
     </div>
+  </div>
 
-    <div class="card">
-      <h2>자동차 <span style="font-weight:400;font-size:12px;color:var(--sub);">(오토바이 포함)</span> <span class="badge" id="vehicleCount">0건</span></h2>
+  <div class="modal-overlay" id="vehicleModalOverlay">
+    <div class="modal-box modal-wide">
+      <div class="modal-header">
+        <h3>🚗 자동차 (오토바이 포함)</h3>
+        <button class="modal-close" id="vehicleModalClose">&#x2715;</button>
+      </div>
+      <div class="modal-body">
+<h2>자동차 <span style="font-weight:400;font-size:12px;color:var(--sub);">(오토바이 포함)</span> <span class="badge" id="modal_vehicleCount">0건</span></h2>
       <div style="overflow-x:auto;">
         <table class="debt-table" id="vehicleTable">
           <thead>
@@ -595,10 +828,21 @@
         <button class="btn btn-sm" id="btnAddVehicle">+ 자동차 추가</button>
         <div class="note">각 차량의 시세1·시세2 평균가가 재산목록에 자동 반영됩니다. 담보권 칸에서 채권목록의 담보채권을 불러와 연동하면, 그 금액만큼 <b>자동으로 차감</b>되어 재산목록 합계에 반영됩니다.</div>
       </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-sm btn-dark" id="vehicleModalDone">닫기</button>
+      </div>
     </div>
+  </div>
 
-    <div class="card">
-      <h2>임차보증금 <span style="font-weight:400;font-size:12px;color:var(--sub);">(반환받을 금액 기준)</span> <span class="badge" id="leaseCount">0건</span></h2>
+  <div class="modal-overlay" id="leaseModalOverlay">
+    <div class="modal-box modal-wide">
+      <div class="modal-header">
+        <h3>🔑 임차보증금</h3>
+        <button class="modal-close" id="leaseModalClose">&#x2715;</button>
+      </div>
+      <div class="modal-body">
+<h2>임차보증금 <span style="font-weight:400;font-size:12px;color:var(--sub);">(반환받을 금액 기준)</span> <span class="badge" id="modal_leaseCount">0건</span></h2>
       <div style="overflow-x:auto;">
         <table class="debt-table" id="leaseTable">
           <thead>
@@ -621,10 +865,21 @@
         <button class="btn btn-sm" id="btnAddLease">+ 임차보증금 추가</button>
         <div class="note">민사집행법 제246조 제1항 제6호 압류금지채권 참고: 서울 보호대상 1억 6,500만원 이하 / 우선변제 5,500만원, 수도권과밀 1억 4,500만원 / 4,800만원, 광역시 등 8,500만원 / 2,800만원, 그 밖 지역 7,500만원 / 2,500만원 (2023.2.21. 개정 기준). "사유"에서 246조 6호를 선택하면 지역별로 자동 공제되고, "반환/회수 곤란"을 선택하면 실반환가능액을 직접 입력한 값이 재산에 반영되며, "질권설정"을 선택하면 채권목록의 담보채권을 불러와 그 금액만큼 보증금에서 자동 공제됩니다.</div>
       </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-sm btn-dark" id="leaseModalDone">닫기</button>
+      </div>
     </div>
+  </div>
 
-    <div class="card">
-      <h2>부동산 <span style="font-weight:400;font-size:12px;color:var(--sub);">(환가예상액 - 피담보채권 = 금액란)</span> <span class="badge" id="realtyCount">0건</span></h2>
+  <div class="modal-overlay" id="realtyModalOverlay">
+    <div class="modal-box modal-wide">
+      <div class="modal-header">
+        <h3>🏢 부동산</h3>
+        <button class="modal-close" id="realtyModalClose">&#x2715;</button>
+      </div>
+      <div class="modal-body">
+<h2>부동산 <span style="font-weight:400;font-size:12px;color:var(--sub);">(환가예상액 - 피담보채권 = 금액란)</span> <span class="badge" id="modal_realtyCount">0건</span></h2>
       <div style="overflow-x:auto;">
         <table class="debt-table" id="realtyTable">
           <thead>
@@ -646,10 +901,21 @@
         <button class="btn btn-sm" id="btnAddRealty">+ 부동산 추가</button>
         <div class="note">배우자 명의 부동산은 담보권 정보가 "해당사항 없음"으로 고정됩니다. 본인 명의인 경우, 담보권 칸의 드롭다운으로 채권목록의 담보채권을 불러와 연동하면 <b>환가예상액에서 그 금액만큼 자동 차감</b>되어 재산목록 합계에 반영됩니다.</div>
       </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-sm btn-dark" id="realtyModalDone">닫기</button>
+      </div>
     </div>
+  </div>
 
-    <div class="card">
-      <h2>사업용 설비 · 재고품 · 비품 등 <span class="badge" id="equipCount">0건</span></h2>
+  <div class="modal-overlay" id="equipModalOverlay">
+    <div class="modal-box modal-wide">
+      <div class="modal-header">
+        <h3>🔧 사업용 설비 · 재고품 · 비품</h3>
+        <button class="modal-close" id="equipModalClose">&#x2715;</button>
+      </div>
+      <div class="modal-body">
+<h2>사업용 설비 · 재고품 · 비품 등 <span class="badge" id="modal_equipCount">0건</span></h2>
       <div style="overflow-x:auto;">
         <table class="debt-table" id="equipTable">
           <thead>
@@ -667,10 +933,21 @@
       <div class="table-actions">
         <button class="btn btn-sm" id="btnAddEquip">+ 항목 추가</button>
       </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-sm btn-dark" id="equipModalDone">닫기</button>
+      </div>
     </div>
+  </div>
 
-    <div class="card">
-      <h2>대여금 채권 <span class="badge" id="loanReceivableCount">0건</span></h2>
+  <div class="modal-overlay" id="loanRecModalOverlay">
+    <div class="modal-box modal-wide">
+      <div class="modal-header">
+        <h3>📄 대여금 채권</h3>
+        <button class="modal-close" id="loanRecModalClose">&#x2715;</button>
+      </div>
+      <div class="modal-body">
+<h2>대여금 채권 <span class="badge" id="modal_loanReceivableCount">0건</span></h2>
       <div style="overflow-x:auto;">
         <table class="debt-table" id="loanReceivableTable">
           <thead>
@@ -688,10 +965,21 @@
       <div class="table-actions">
         <button class="btn btn-sm" id="btnAddLoanReceivable">+ 대여금채권 추가</button>
       </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-sm btn-dark" id="loanRecModalDone">닫기</button>
+      </div>
     </div>
+  </div>
 
-    <div class="card">
-      <h2>매출금 채권 <span class="badge" id="salesReceivableCount">0건</span></h2>
+  <div class="modal-overlay" id="salesRecModalOverlay">
+    <div class="modal-box modal-wide">
+      <div class="modal-header">
+        <h3>📑 매출금 채권</h3>
+        <button class="modal-close" id="salesRecModalClose">&#x2715;</button>
+      </div>
+      <div class="modal-body">
+<h2>매출금 채권 <span class="badge" id="modal_salesReceivableCount">0건</span></h2>
       <div style="overflow-x:auto;">
         <table class="debt-table" id="salesReceivableTable">
           <thead>
@@ -709,10 +997,21 @@
       <div class="table-actions">
         <button class="btn btn-sm" id="btnAddSalesReceivable">+ 매출금채권 추가</button>
       </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-sm btn-dark" id="salesRecModalDone">닫기</button>
+      </div>
     </div>
+  </div>
 
-    <div class="card">
-      <h2>예상 퇴직금</h2>
+  <div class="modal-overlay" id="severanceModalOverlay">
+    <div class="modal-box modal-wide">
+      <div class="modal-header">
+        <h3>💼 예상 퇴직금</h3>
+        <button class="modal-close" id="severanceModalClose">&#x2715;</button>
+      </div>
+      <div class="modal-body">
+<h2>예상 퇴직금</h2>
       <div class="grid">
         <div class="field">
           <label>근무처</label>
@@ -730,10 +1029,21 @@
         </div>
       </div>
       <div class="note" style="margin-top:8px;" id="severanceNote">압류할 수 없는 퇴직금(1/2)은 제외되어, 재산 반영액은 총액의 절반입니다: <span id="severanceNetDisplay">0원</span></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-sm btn-dark" id="severanceModalDone">닫기</button>
+      </div>
     </div>
+  </div>
 
-    <div class="card">
-      <h2>기타 재산 <span class="badge" id="otherCount">0건</span></h2>
+  <div class="modal-overlay" id="otherModalOverlay">
+    <div class="modal-box modal-wide">
+      <div class="modal-header">
+        <h3>📦 기타 재산</h3>
+        <button class="modal-close" id="otherModalClose">&#x2715;</button>
+      </div>
+      <div class="modal-body">
+<h2>기타 재산 <span class="badge" id="modal_otherCount">0건</span></h2>
       <div style="overflow-x:auto;">
         <table class="debt-table" id="otherTable">
           <thead>
@@ -750,10 +1060,21 @@
       <div class="table-actions">
         <button class="btn btn-sm" id="btnAddOther">+ 기타재산 추가</button>
       </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-sm btn-dark" id="otherModalDone">닫기</button>
+      </div>
     </div>
+  </div>
 
-    <div class="card">
-      <h2>면제재산 결정신청 <span class="badge" id="exemptionCount">0건</span></h2>
+  <div class="modal-overlay" id="exemptionModalOverlay">
+    <div class="modal-box modal-wide">
+      <div class="modal-header">
+        <h3>🛡 면제재산 결정신청</h3>
+        <button class="modal-close" id="exemptionModalClose">&#x2715;</button>
+      </div>
+      <div class="modal-body">
+<h2>면제재산 결정신청 <span class="badge" id="modal_exemptionCount">0건</span></h2>
       <div style="overflow-x:auto;">
         <table class="debt-table" id="exemptionTable">
           <thead>
@@ -772,27 +1093,13 @@
         <button class="btn btn-sm" id="btnAddExemption">+ 면제재산 항목 추가</button>
         <div class="note">특정 재산항목을 연계하면 해당 항목의 현재 금액이 자동으로 따라오고(중복공제 방지), 이미 다른 줄에서 선택된 항목은 목록에서 빠집니다. "직접입력"을 선택하면 금액을 임의로 넣을 수 있어요 (예: 압류금지채권과 무관하게 법원이 별도로 요구하는 면제재산).</div>
       </div>
-    </div>
-
-    <div class="card">
-      <h2>합계</h2>
-      <div class="summary-strip" style="grid-template-columns:repeat(3,1fr);">
-        <div class="box">
-          <div class="label">재산목록 합계</div>
-          <div class="value" id="assetTotalDisplay">0원</div>
-        </div>
-        <div class="box">
-          <div class="label">면제재산 결정신청 금액</div>
-          <div class="value" id="exemptionDisplay">0원</div>
-        </div>
-        <div class="box">
-          <div class="label">청산가치</div>
-          <div class="value" id="liquidationValueDisplay">0원</div>
-        </div>
       </div>
-      <div class="note">청산가치 = 재산목록 합계 - 면제재산 결정신청 금액. 채권자목록 탭의 채무 총액과 함께 변제계획안 작성 시 사용됩니다.</div>
+      <div class="modal-footer">
+        <button class="btn btn-sm btn-dark" id="exemptionModalDone">닫기</button>
+      </div>
     </div>
   </div>
+
 
   <div class="tab-panel" id="panel-income">
     <div class="card" style="padding:12px 22px;">
@@ -1043,63 +1350,8 @@
 
     <div class="card">
       <h2>Ⅰ. 경력</h2>
-      <div style="font-size:12.5px;font-weight:600;color:var(--navy);margin-bottom:8px;">1. 최종학력</div>
-      <div class="grid">
-        <div class="field"><label>졸업(중퇴)일자</label><input type="text" id="stmtEduDate" placeholder="26/2/1"></div>
-        <div class="field">
-          <label>구분</label>
-          <select id="stmtEduStatus"><option value="졸업">졸업</option><option value="중퇴">중퇴</option></select>
-        </div>
-      </div>
-
-      <div style="height:1px;background:var(--line);margin:16px 0;"></div>
-
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <div style="font-size:12.5px;font-weight:600;color:var(--navy);">2. 과거 경력 <span style="font-weight:400;color:var(--sub);font-size:11.5px;">(최근 경력부터 기재)</span> <span class="badge" id="stmtCareerCount">0건</span></div>
-      </div>
-      <div style="overflow-x:auto;">
-        <table class="debt-table" id="stmtCareerTable">
-          <thead>
-            <tr>
-              <th style="width:100px;">기간 시작</th>
-              <th style="width:100px;">기간 종료</th>
-              <th style="width:70px;">현재까지</th>
-              <th style="min-width:90px;">업종</th>
-              <th style="min-width:100px;">직장명</th>
-              <th style="min-width:80px;">직위</th>
-              <th style="width:90px;">구분</th>
-              <th style="width:40px;"></th>
-            </tr>
-          </thead>
-          <tbody id="stmtCareerBody"></tbody>
-        </table>
-      </div>
-      <div class="table-actions">
-        <button class="btn btn-sm" id="btnAddStmtCareer">+ 경력 추가</button>
-      </div>
-
-      <div style="height:1px;background:var(--line);margin:16px 0;"></div>
-
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <div style="font-size:12.5px;font-weight:600;color:var(--navy);">3. 과거 결혼, 이혼, 입양, 파양 경력 <span class="badge" id="stmtMarriageCount">0건</span></div>
-      </div>
-      <div style="overflow-x:auto;">
-        <table class="debt-table" id="stmtMarriageTable">
-          <thead>
-            <tr>
-              <th style="width:120px;">일자</th>
-              <th style="min-width:100px;">상대방</th>
-              <th style="width:100px;">구분</th>
-              <th style="width:40px;"></th>
-            </tr>
-          </thead>
-          <tbody id="stmtMarriageBody"></tbody>
-        </table>
-      </div>
-      <div class="table-actions">
-        <button class="btn btn-sm" id="btnAddStmtMarriage">+ 이력 추가</button>
-        <div class="note">인적사항 탭의 혼인이력과는 별개로, 이 진술서에 기재할 항목만 별도로 관리합니다.</div>
-      </div>
+      <div class="note">경력 정보는 <b>인적사항 탭 → 이력사항</b> 카드에서 입력합니다. 입력한 내용이 진술서 인쇄 시 자동으로 반영됩니다.</div>
+      <div class="note" style="margin-top:6px;">최종학력 → 인적사항 카드 &nbsp;|&nbsp; 과거·현재 경력 → 이력사항 카드 &nbsp;|&nbsp; 혼인관계 → 혼인관계 카드 &nbsp;|&nbsp; 현재 직장·사업 → 수입·지출 탭</div>
     </div>
 
     <div class="card">
@@ -1407,7 +1659,7 @@ let state = {
   repayBankName: '',
   repayBankAccount: '',
   draftDate: '',
-  debtor: { name:'', rrn:'', phone:'', regAddress:'', currentAddress:'', sameAsReg:true, zip:'' },
+  debtor: { name:'', rrn:'', phone:'', regAddress:'', currentAddress:'', sameAsReg:true, zip:'', finalEducation: { date:'', status:'졸업', school:'' } },
   creditors: [],
   family: [],
   marriageHistory: [],
@@ -1431,9 +1683,7 @@ let state = {
     miscClause: ''
   },
   statement: {
-    finalEducation: { date: '', status: '졸업' },
     pastCareers: [],
-    pastMarriageEvents: [],
     housing: {
       startDate: '', type: 'own',
       leaseDeposit: '', leaseRent: '', leaseOverdue: '', leaseTenantName: '',
@@ -1486,7 +1736,9 @@ function load(){
       state = Object.assign(state, parsed);
     }
   }catch(e){ console.error('load failed', e); }
-  if(!state.debtor) state.debtor = { name:'', rrn:'', phone:'', regAddress:'', currentAddress:'', sameAsReg:true, zip:'' };
+  if(!state.debtor) state.debtor = { name:'', rrn:'', phone:'', regAddress:'', currentAddress:'', sameAsReg:true, zip:'', finalEducation: { date:'', status:'졸업', school:'' } };
+  if(!state.debtor.finalEducation) state.debtor.finalEducation = { date:'', status:'졸업', school:'' };
+  if(state.debtor.finalEducation.school === undefined) state.debtor.finalEducation.school = '';
   if(state.debtor.sameAsReg === undefined) state.debtor.sameAsReg = true;
   if(state.bankName === undefined) state.bankName = '';
   if(state.bankAccount === undefined) state.bankAccount = '';
@@ -1555,8 +1807,7 @@ function load(){
   if(!state.repaymentPlan.assetLiquidation) state.repaymentPlan.assetLiquidation = { enabled: false, amount: '', round: '' };
   if(state.repaymentPlan.miscClause === undefined) state.repaymentPlan.miscClause = '';
   if(!state.statement) state.statement = {
-    finalEducation: { date: '', status: '졸업' },
-    pastCareers: [], pastMarriageEvents: [],
+    pastCareers: [],
     housing: { startDate:'', type:'own', leaseDeposit:'', leaseRent:'', leaseOverdue:'', leaseTenantName:'', relativeOwnerName:'', nonRelativeRelation:'', otherText:'' },
     hasLegalAction: false, legalActionRows: [],
     reasonChecks: { livingCost:false, medicalCost:false, education:false, leisure:false, businessFailure:false, guarantee:false, stockLoss:false, fraud:false },
@@ -1569,7 +1820,8 @@ function load(){
     }
   };
   if(!Array.isArray(state.statement.pastCareers)) state.statement.pastCareers = [];
-  if(!Array.isArray(state.statement.pastMarriageEvents)) state.statement.pastMarriageEvents = [];
+  if(state.statement.finalEducation !== undefined) delete state.statement.finalEducation;
+  if(state.statement.pastMarriageEvents !== undefined) delete state.statement.pastMarriageEvents;
   if(!Array.isArray(state.statement.legalActionRows)) state.statement.legalActionRows = [];
   if(!state.assets) state.assets = {
     cash:'', deposits:[], insurance:[],
@@ -1711,6 +1963,9 @@ function renderBasic(){
   document.getElementById('debtorName').value = state.debtor.name;
   document.getElementById('debtorRRN').value = state.debtor.rrn;
   document.getElementById('debtorPhone').value = state.debtor.phone;
+  document.getElementById('debtorEduSchool').value = state.debtor.finalEducation.school || '';
+  document.getElementById('debtorEduDate').value = fmtDateInputDisplay(state.debtor.finalEducation.date);
+  document.getElementById('debtorEduStatus').value = state.debtor.finalEducation.status;
   document.getElementById('debtorRegAddr').value = state.debtor.regAddress;
   document.getElementById('debtorCurrentAddr').value = state.debtor.sameAsReg ? state.debtor.regAddress : state.debtor.currentAddress;
   document.getElementById('debtorCurrentAddr').disabled = state.debtor.sameAsReg;
@@ -1985,7 +2240,7 @@ function renderExemptionTable(){
       <td><button class="del-row" data-id="${row.id}" title="삭제">✕</button></td>
     </tr>`;
   }).join('');
-  document.getElementById('exemptionCount').textContent = rows.length + '건';
+  const exEl=document.getElementById('exemptionCount'); if(exEl) exEl.textContent=rows.length;
 }
 
 function bindExemptionTable(){
@@ -2111,7 +2366,7 @@ function renderLeaseTable(){
       <td><button class="del-row" data-id="${row.id}" title="삭제">✕</button></td>
     </tr>`;
   }).join('');
-  document.getElementById('leaseCount').textContent = rows.length + '건';
+  const lcEl=document.getElementById('leaseCount'); if(lcEl) lcEl.textContent=rows.length;
 }
 
 function bindLeaseTable(){
@@ -2214,7 +2469,7 @@ function renderVehicleTable(){
       <td><button class="del-row" data-id="${row.id}" title="삭제">✕</button></td>
     </tr>`;
   }).join('');
-  document.getElementById('vehicleCount').textContent = rows.length + '건';
+  const vcEl=document.getElementById('vehicleCount'); if(vcEl) vcEl.textContent=rows.length;
 }
 
 function bindVehicleTable(){
@@ -2326,7 +2581,7 @@ function renderRealtyTable(){
       <td><button class="del-row" data-id="${row.id}" title="삭제">✕</button></td>
     </tr>`;
   }).join('');
-  document.getElementById('realtyCount').textContent = rows.length + '건';
+  const rcEl=document.getElementById('realtyCount'); if(rcEl) rcEl.textContent=rows.length;
 }
 
 function bindRealtyTable(){
@@ -2418,7 +2673,7 @@ function renderAssetTable(tbodyId, rows, columns, badgeId){
     }).join('');
     return `<tr><td class="rownum">${idx+1}</td>${cells}<td><button class="del-row" data-row="${tbodyId}" data-id="${row.id}" title="삭제">✕</button></td></tr>`;
   }).join('');
-  if(badgeId) document.getElementById(badgeId).textContent = rows.length + '건';
+  if(badgeId){ const bEl=document.getElementById(badgeId); if(bEl) bEl.textContent=rows.length; }
 }
 
 function renderAssets(){
@@ -2484,49 +2739,67 @@ function renderAssets(){
 
 function renderAssetSummary(){
   const a = state.assets;
+  const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+  const setHtml = (id, val) => { const el = document.getElementById(id); if(el) el.innerHTML = val; };
+
   const depositSum = a.deposits.reduce((s,r) => s + (Number(r.balance)||0), 0);
   const depositNet = Math.max(0, depositSum - 2500000);
-  document.getElementById('depositSumDisplay').textContent = moneyWon(depositSum);
-  document.getElementById('depositNetDisplay').textContent = moneyWon(depositNet);
+  set('depositSumDisplay', moneyWon(depositSum));
+  set('depositNetDisplay', moneyWon(depositNet));
+  set('cube_depositSumDisplay', moneyWon(depositNet));
 
   const insuranceSum = a.insurance.reduce((s,r) => s + (Number(r.surrender)||0), 0);
   const insuranceNet = Math.max(0, insuranceSum - 2500000);
-  document.getElementById('insuranceSumDisplay').textContent = moneyWon(insuranceSum);
-  document.getElementById('insuranceNetDisplay').textContent = moneyWon(insuranceNet);
+  set('insuranceSumDisplay', moneyWon(insuranceSum));
+  set('insuranceNetDisplay', moneyWon(insuranceNet));
+  set('cube_insuranceSumDisplay', moneyWon(insuranceNet));
 
   const vehicleTotal = a.vehicles.reduce((s,r) => {
     const p1 = Number(r.price1)||0, p2 = Number(r.price2)||0;
     const avg = (p1 && p2) ? Math.round((p1+p2)/2) : (p1 || p2 || 0);
     return s + Math.max(0, avg - sumLinkedCreditorsCapped(r));
   }, 0);
+  set('cube_vehicleSumDisplay', moneyWon(vehicleTotal));
 
   const realtyTotal = a.realties.reduce((s,r) => s + Math.max(0, (Number(r.expected)||0) - sumLinkedCreditorsCapped(r)), 0);
-  const leaseTotal = a.leases.reduce((s,r) => s + computeLeaseCounted(r), 0);
-  const equipTotal = a.equipment.reduce((s,r) => s + (Number(r.value)||0), 0);
-  const otherTotal = a.others.reduce((s,r) => s + (Number(r.value)||0), 0);
+  set('cube_realtySumDisplay', moneyWon(realtyTotal));
 
-  const severanceNote = document.getElementById('severanceNote');
+  const leaseTotal = a.leases.reduce((s,r) => s + computeLeaseCounted(r), 0);
+  set('cube_leaseSumDisplay', moneyWon(leaseTotal));
+
+  const equipTotal = a.equipment.reduce((s,r) => s + (Number(r.value)||0), 0);
+  set('cube_equipSumDisplay', moneyWon(equipTotal));
+
+  const otherTotal = a.others.reduce((s,r) => s + (Number(r.value)||0), 0);
+  set('cube_otherSumDisplay', moneyWon(otherTotal));
+
+  const loanReceivableSum = a.loanReceivables.reduce((s,r) => s + (Number(r.amount)||0), 0);
+  set('cube_loanRecSumDisplay', moneyWon(loanReceivableSum));
+
+  const salesReceivableSum = a.salesReceivables.reduce((s,r) => s + (Number(r.amount)||0), 0);
+  set('cube_salesRecSumDisplay', moneyWon(salesReceivableSum));
+
   let severanceNet = 0;
   if(a.severance.isPension){
     severanceNet = 0;
-    severanceNote.innerHTML = '퇴직연금 가입자로 표시되어 재산가치·청산가치에 반영되지 않습니다.';
+    setHtml('severanceNote', '퇴직연금 가입자로 표시되어 재산가치·청산가치에 반영되지 않습니다.');
   } else {
     severanceNet = Math.round((Number(a.severance.total)||0) / 2);
-    severanceNote.innerHTML = `압류할 수 없는 퇴직금(1/2)은 제외되어, 재산 반영액은 총액의 절반입니다: <span id="severanceNetDisplay">${moneyWon(severanceNet)}</span>`;
+    setHtml('severanceNote', `압류할 수 없는 퇴직금(1/2)은 제외되어, 재산 반영액은 총액의 절반입니다: <span id="severanceNetDisplay">${moneyWon(severanceNet)}</span>`);
   }
-
-  const loanReceivableSum = a.loanReceivables.reduce((s,r) => s + (Number(r.amount)||0), 0);
-  const salesReceivableSum = a.salesReceivables.reduce((s,r) => s + (Number(r.amount)||0), 0);
+  set('cube_severanceDisplay', moneyWon(severanceNet));
 
   const cash = Number(a.cash)||0;
+  set('cube_cashDisplay', moneyWon(cash));
 
   const total = cash + depositNet + insuranceNet + vehicleTotal + leaseTotal + realtyTotal + equipTotal + loanReceivableSum + salesReceivableSum + severanceNet + otherTotal;
   const exemption = getExemptionTotal();
   const liquidation = Math.max(0, total - exemption);
 
-  document.getElementById('assetTotalDisplay').textContent = moneyWon(total);
-  document.getElementById('exemptionDisplay').textContent = moneyWon(exemption);
-  document.getElementById('liquidationValueDisplay').textContent = moneyWon(liquidation);
+  set('cube_exemptionSumDisplay', moneyWon(exemption));
+  set('assetTotalDisplay', moneyWon(total));
+  set('exemptionDisplay', moneyWon(exemption));
+  set('liquidationValueDisplay', moneyWon(liquidation));
   if(typeof renderRepaymentSummary === 'function' && document.getElementById('repayTotalDebt')) renderRepaymentSummary();
 }
 
@@ -2592,7 +2865,7 @@ function renderFamily(){
       <td><input type="text" data-id="${row.id}" data-field="livingPeriod" value="${escapeHtml(row.livingPeriod)}" placeholder="예: 5년"></td>
       <td><button class="del-row" data-id="${row.id}" title="삭제">✕</button></td>
     </tr>`).join('');
-  document.getElementById('familyCount').textContent = rows.length + '건';
+  const fcEl=document.getElementById('familyCount'); if(fcEl) fcEl.textContent=rows.length;
 }
 
 function newMarriageRow(){ return { id:'m_'+Math.random().toString(36).slice(2,9), type:'혼인', spouseName:'', date:'', note:'' }; }
@@ -2614,23 +2887,16 @@ function renderMarriageHistory(){
       <td><input type="text" data-id="${row.id}" data-field="note" value="${escapeHtml(row.note)}" placeholder="비고"></td>
       <td><button class="del-row" data-id="${row.id}" title="삭제">✕</button></td>
     </tr>`).join('');
-  document.getElementById('marriageCount').textContent = rows.length + '건';
+  const mcEl=document.getElementById('marriageCount'); if(mcEl) mcEl.textContent=rows.length;
 }
 
 function bindMarriageHistory(){
-  document.getElementById('btnOpenMarriageModal').addEventListener('click', () => {
-    document.getElementById('marriageModalOverlay').classList.add('open');
-  });
+  // 혼인관계 모달 열기는 bindCubeModals의 cubeMarriage 클릭에서 처리함
   const closeMarriageModal = () => document.getElementById('marriageModalOverlay').classList.remove('open');
   document.getElementById('marriageModalCloseBtn').addEventListener('click', closeMarriageModal);
   document.getElementById('marriageModalDoneBtn').addEventListener('click', closeMarriageModal);
   document.getElementById('marriageModalOverlay').addEventListener('click', e => {
     if(e.target.id === 'marriageModalOverlay') closeMarriageModal();
-  });
-  document.addEventListener('keydown', e => {
-    if(e.key === 'Escape' && document.getElementById('marriageModalOverlay').classList.contains('open')){
-      closeMarriageModal();
-    }
   });
 
   document.getElementById('marriageBody').addEventListener('input', e => {
@@ -2716,7 +2982,8 @@ function renderHousing(){
       <td><button class="del-row" data-id="${row.id}" title="삭제">✕</button></td>
     </tr>`;
   }).join('');
-  document.getElementById('housingCount').textContent = rows.length + '건';
+  const hcEl = document.getElementById('housingCount');
+  if(hcEl) hcEl.textContent = rows.length;
 }
 
 function bindHousing(){
@@ -3513,17 +3780,12 @@ function printRepaymentPlan(){
 }
 
 function newStmtCareerRow(){ return { id:'sc_'+Math.random().toString(36).slice(2,9), periodStart:'', periodEnd:'', isCurrent:false, businessType:'', workplace:'', position:'', natureType:'근무' }; }
-function newStmtMarriageRow(){ return { id:'sm_'+Math.random().toString(36).slice(2,9), date:'', spouseName:'', type:'혼인' }; }
 function newStmtLegalActionRow(){ return { id:'sl_'+Math.random().toString(36).slice(2,9), detail:'', creditor:'', court:'', caseNumber:'' }; }
 
 function renderStatement(){
   const st = state.statement;
 
-  document.getElementById('stmtEduDate').value = fmtDateInputDisplay(st.finalEducation.date);
-  document.getElementById('stmtEduStatus').value = st.finalEducation.status;
-
   renderStmtCareer();
-  renderStmtMarriage();
 
   document.getElementById('stmtHousingStart').value = fmtDateInputDisplay(st.housing.startDate);
   document.getElementById('stmtHousingType').value = st.housing.type;
@@ -3590,25 +3852,7 @@ function renderStmtCareer(){
       </select></td>
       <td><button class="del-row" data-id="${row.id}" title="삭제">✕</button></td>
     </tr>`).join('');
-  document.getElementById('stmtCareerCount').textContent = rows.length + '건';
-}
-
-function renderStmtMarriage(){
-  const rows = state.statement.pastMarriageEvents;
-  const body = document.getElementById('stmtMarriageBody');
-  body.innerHTML = rows.map(row => `
-    <tr>
-      <td><input type="text" data-id="${row.id}" data-field="date" value="${escapeHtml(fmtDateInputDisplay(row.date))}" placeholder="26/1/1"></td>
-      <td><input type="text" data-id="${row.id}" data-field="spouseName" value="${escapeHtml(row.spouseName)}" placeholder="상대방 성명"></td>
-      <td><select data-id="${row.id}" data-field="type">
-        <option value="혼인" ${row.type==='혼인'?'selected':''}>혼인</option>
-        <option value="이혼" ${row.type==='이혼'?'selected':''}>이혼</option>
-        <option value="입양" ${row.type==='입양'?'selected':''}>입양</option>
-        <option value="파양" ${row.type==='파양'?'selected':''}>파양</option>
-      </select></td>
-      <td><button class="del-row" data-id="${row.id}" title="삭제">✕</button></td>
-    </tr>`).join('');
-  document.getElementById('stmtMarriageCount').textContent = rows.length + '건';
+  const scEl=document.getElementById('stmtCareerCount'); if(scEl) scEl.textContent=rows.length;
 }
 
 function renderStmtLegalAction(){
@@ -3632,18 +3876,6 @@ function bindStatement(){
       e.target.blur();
     }
   });
-
-  document.getElementById('stmtEduDate').addEventListener('change', e => {
-    const raw = e.target.value.trim();
-    if(!raw){ state.statement.finalEducation.date=''; e.target.classList.remove('date-error'); save(); return; }
-    const parsed = parseFlexibleDate(raw);
-    if(parsed===null){ e.target.classList.add('date-error'); save(); return; }
-    state.statement.finalEducation.date = parsed;
-    e.target.value = fmtDateInputDisplay(parsed);
-    e.target.classList.remove('date-error');
-    save();
-  });
-  document.getElementById('stmtEduStatus').addEventListener('change', e => { state.statement.finalEducation.status = e.target.value; save(); });
 
   document.getElementById('btnAddStmtCareer').addEventListener('click', () => {
     state.statement.pastCareers.push(newStmtCareerRow());
@@ -3690,49 +3922,6 @@ function bindStatement(){
     if(!btn) return;
     state.statement.pastCareers = state.statement.pastCareers.filter(r => r.id !== btn.dataset.id);
     renderStmtCareer();
-    save();
-  });
-
-  document.getElementById('btnAddStmtMarriage').addEventListener('click', () => {
-    state.statement.pastMarriageEvents.push(newStmtMarriageRow());
-    renderStmtMarriage();
-    save();
-  });
-  document.getElementById('stmtMarriageBody').addEventListener('input', e => {
-    const t = e.target;
-    const id = t.dataset.id, field = t.dataset.field;
-    if(!id || !field) return;
-    const row = state.statement.pastMarriageEvents.find(r => r.id === id);
-    if(!row) return;
-    if(field !== 'date') row[field] = t.value;
-    save();
-  });
-  document.getElementById('stmtMarriageBody').addEventListener('change', e => {
-    const t = e.target;
-    const id = t.dataset.id, field = t.dataset.field;
-    if(!id) return;
-    const row = state.statement.pastMarriageEvents.find(r => r.id === id);
-    if(!row) return;
-    if(field === 'date'){
-      const raw = t.value.trim();
-      if(!raw){ row.date=''; t.classList.remove('date-error'); save(); return; }
-      const parsed = parseFlexibleDate(raw);
-      if(parsed===null){ t.classList.add('date-error'); save(); return; }
-      row.date = parsed;
-      t.value = fmtDateInputDisplay(parsed);
-      t.classList.remove('date-error');
-      save();
-      return;
-    }
-    if(t.tagName !== 'SELECT') return;
-    row.type = t.value;
-    save();
-  });
-  document.getElementById('stmtMarriageBody').addEventListener('click', e => {
-    const btn = e.target.closest('.del-row');
-    if(!btn) return;
-    state.statement.pastMarriageEvents = state.statement.pastMarriageEvents.filter(r => r.id !== btn.dataset.id);
-    renderStmtMarriage();
     save();
   });
 
@@ -3838,7 +4027,19 @@ function bindStatement(){
 function printStatement(){
   const st = state.statement;
 
-  const careerList = st.pastCareers.length ? st.pastCareers : [null];
+  // 현재 소득처(수입·지출 탭)를 "현재까지" 경력으로 변환
+  const currentCareers = state.income.sources.map(src => ({
+    periodStart: src.extra || '', periodEnd: '', isCurrent: true,
+    businessType: src.type === 'selfEmployed' ? (src.title||'') : '',
+    workplace: src.name || '',
+    position: src.type === 'selfEmployed' ? '' : (src.title||''),
+    natureType: src.type === 'selfEmployed' ? '자영' : '근무'
+  }));
+  // 과거(그만둔) 경력은 진술서 탭에서 직접 입력한 목록 사용
+  const pastCareersOnly = st.pastCareers.map(r => ({ ...r }));
+  const allCareers = [...currentCareers, ...pastCareersOnly];
+
+  const careerList = allCareers.length ? allCareers : [null];
   const careerHtml = careerList.map(r => {
     if(!r) return `<tr><td colspan="2" style="text-align:center;color:#888;">기재사항 없음</td></tr>`;
     const periodText = `${fmtDateDot(r.periodStart)||'-'} 부터 ${r.isCurrent ? '현재' : (fmtDateDot(r.periodEnd)||'-')} 까지`;
@@ -3857,7 +4058,7 @@ function printStatement(){
     </tr>`;
   }).join('');
 
-  const marriageList = st.pastMarriageEvents.length ? st.pastMarriageEvents : [null];
+  const marriageList = state.marriageHistory.length ? state.marriageHistory : [null];
   const marriageHtml = marriageList.map(r => {
     if(!r) return `<tr><td colspan="3" style="text-align:center;color:#888;">해당사항 없음</td></tr>`;
     return `<tr>
@@ -3948,7 +4149,7 @@ function printStatement(){
 
   <div class="sec-title">Ⅰ. 경력</div>
   <div class="cap">1. 최종학력</div>
-  <div class="indent">${fmtDateDot(st.finalEducation.date)||'-'} (${st.finalEducation.status})</div>
+  <div class="indent">${escapeHtml(state.debtor.finalEducation.school)||'-'} &nbsp;${fmtDateDot(state.debtor.finalEducation.date)||'-'} (${state.debtor.finalEducation.status})</div>
 
   <div class="cap">2. 과거 경력 <span style="font-weight:400;font-size:10.5pt;color:#555;">(최근 경력부터 기재)</span></div>
   <table>
@@ -4935,6 +5136,56 @@ function printInsuranceStatus(){
   printWin.document.close();
 }
 
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function bindCubeModals(){
+  // 인적사항 큐브
+  document.getElementById('cubeCareer').addEventListener('click', () => openModal('careerModalOverlay'));
+  document.getElementById('cubeHousing').addEventListener('click', () => openModal('housingModalOverlay'));
+  document.getElementById('cubeFamily').addEventListener('click', () => openModal('familyModalOverlay'));
+  document.getElementById('cubeMarriage').addEventListener('click', () => openModal('marriageModalOverlay'));
+  [
+    ['careerModalClose','careerModalDone','careerModalOverlay'],
+    ['housingModalClose','housingModalDone','housingModalOverlay'],
+    ['familyModalClose','familyModalDone','familyModalOverlay'],
+  ].forEach(([closeBtn, doneBtn, overlayId]) => {
+    document.getElementById(closeBtn).addEventListener('click', () => closeModal(overlayId));
+    document.getElementById(doneBtn).addEventListener('click', () => closeModal(overlayId));
+    document.getElementById(overlayId).addEventListener('click', e => {
+      if(e.target.id === overlayId) closeModal(overlayId);
+    });
+  });
+
+  // 재산목록 큐브
+  const assetCubes = [
+    ['cubeCash','cashModalOverlay'],['cubeDeposit','depositModalOverlay'],
+    ['cubeInsurance','insuranceModalOverlay'],['cubeVehicle','vehicleModalOverlay'],
+    ['cubeLease','leaseModalOverlay'],['cubeRealty','realtyModalOverlay'],
+    ['cubeEquip','equipModalOverlay'],['cubeLoanRec','loanRecModalOverlay'],
+    ['cubeSalesRec','salesRecModalOverlay'],['cubeSeverance','severanceModalOverlay'],
+    ['cubeOther','otherModalOverlay'],['cubeExemption','exemptionModalOverlay'],
+  ];
+  assetCubes.forEach(([cubeId, overlayId]) => {
+    const cube = document.getElementById(cubeId);
+    if(cube) cube.addEventListener('click', () => openModal(overlayId));
+    const overlay = document.getElementById(overlayId);
+    if(overlay){
+      const base = overlayId.replace('Overlay','');
+      const closeBtn = document.getElementById(base+'Close');
+      const doneBtn = document.getElementById(base+'Done');
+      if(closeBtn) closeBtn.addEventListener('click', () => closeModal(overlayId));
+      if(doneBtn) doneBtn.addEventListener('click', () => closeModal(overlayId));
+      overlay.addEventListener('click', e => { if(e.target.id === overlayId) closeModal(overlayId); });
+    }
+  });
+
+  // ESC 키 — 열려있는 모달 전체 닫기
+  document.addEventListener('keydown', e => {
+    if(e.key !== 'Escape') return;
+    document.querySelectorAll('.modal-overlay.open').forEach(el => el.classList.remove('open'));
+  });
+}
+
 function bindBasicInputs(){
   document.getElementById('court').addEventListener('input', e => { state.court = e.target.value; renderSummary(); save(); });
   document.getElementById('caseNumber').addEventListener('input', e => { state.caseNumber = e.target.value; save(); });
@@ -4964,6 +5215,18 @@ function bindBasicInputs(){
   document.getElementById('debtorName').addEventListener('input', e => { state.debtor.name = e.target.value; save(); });
   document.getElementById('debtorRRN').addEventListener('input', e => { state.debtor.rrn = e.target.value; save(); });
   document.getElementById('debtorPhone').addEventListener('input', e => { state.debtor.phone = e.target.value; save(); });
+  document.getElementById('debtorEduSchool').addEventListener('input', e => { state.debtor.finalEducation.school = e.target.value; save(); });
+  document.getElementById('debtorEduDate').addEventListener('change', e => {
+    const raw = e.target.value.trim();
+    if(!raw){ state.debtor.finalEducation.date=''; e.target.classList.remove('date-error'); save(); return; }
+    const parsed = parseFlexibleDate(raw);
+    if(parsed===null){ e.target.classList.add('date-error'); save(); return; }
+    state.debtor.finalEducation.date = parsed;
+    e.target.value = fmtDateInputDisplay(parsed);
+    e.target.classList.remove('date-error');
+    save();
+  });
+  document.getElementById('debtorEduStatus').addEventListener('change', e => { state.debtor.finalEducation.status = e.target.value; save(); });
   document.getElementById('debtorRegAddr').addEventListener('input', e => {
     state.debtor.regAddress = e.target.value;
     if(state.debtor.sameAsReg){
@@ -5807,7 +6070,7 @@ function bindActions(){
     state = {
       procedureType: '회생', court:'', caseNumber:'', courtDivision:'', repayStartDate:'', bankName:'', bankAccount:'',
       filingDate:'', commencementDate:'', confirmationDate:'', repayBankName:'', repayBankAccount:'', draftDate:'',
-      debtor: { name:'', rrn:'', phone:'', regAddress:'', currentAddress:'', sameAsReg:true, zip:'' },
+      debtor: { name:'', rrn:'', phone:'', regAddress:'', currentAddress:'', sameAsReg:true, zip:'', finalEducation: { date:'', status:'졸업', school:'' } },
       creditors: [newCreditorRow()],
       family: [],
       marriageHistory: [],
@@ -5819,6 +6082,19 @@ function bindActions(){
         medianIncome: {1:'2564238',2:'4199292',3:'5359036',4:'6494738',5:'7108192',6:'8555952',7:'9515150'},
         expectedRepayment: '',
         livingExpenseDetail: { food:'', utilities:'', furniture:'', clothing:'', entertainment:'', transport:'', phone:'', housing:'', medical:'', education:'', additionalReason:'', additionalRate:'' }
+      },
+      statement: {
+        pastCareers: [],
+        housing: { startDate:'', type:'own', leaseDeposit:'', leaseRent:'', leaseOverdue:'', leaseTenantName:'', relativeOwnerName:'', nonRelativeRelation:'', otherText:'' },
+        hasLegalAction: false, legalActionRows: [],
+        reasonChecks: { livingCost:false, medicalCost:false, education:false, leisure:false, businessFailure:false, guarantee:false, stockLoss:false, fraud:false },
+        reasonEtc: '', detailedStatement: '',
+        pastProcedures: {
+          bankruptcy: { checked:false, court:'', date:'', progress:'' },
+          rehabilitation: { checked:false, court:'', date:'', progress:'' },
+          workout: { checked:false, court:'', date:'', count:'', amount:'' },
+          badBank: { checked:false, court:'', date:'', progress:'' }
+        }
       },
       repaymentPlan: {
         method: '36months', months: '36', hasExternalCommittee: false, committeeFeeRate: '',
@@ -5843,6 +6119,7 @@ function bindActions(){
 
 load();
 populateCreditorDatalist();
+bindCubeModals();
 bindBasicInputs();
 bindTable();
 bindTabs();
