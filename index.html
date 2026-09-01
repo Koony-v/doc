@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>사건 인적사항 · 부채작성</title>
+<title>법률사무소 은오</title>
 <script src="https://t1.kakaocdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 <style>
   :root{
@@ -75,6 +75,18 @@
     padding:8px 20px;border:none;background:#fff;cursor:pointer;font-size:13px;font-weight:500;color:var(--sub);
   }
   .procedure-toggle button.active{background:var(--navy);color:#fff;}
+
+  .method-card{
+    border:2px solid var(--line);border-radius:8px;padding:12px 14px;
+    cursor:pointer;transition:all .15s;background:#fff;
+  }
+  .method-card:hover{border-color:var(--navy);}
+  .method-card.active{border-color:var(--navy);background:#eef2fb;}
+  .method-card.ok{border-color:#1a7a1a;}
+  .method-card.ok.active{background:#eaf5ea;border-color:#1a7a1a;}
+  .method-card.ng{border-color:#c0392b;opacity:0.7;}
+  .method-card.disabled{opacity:0.5;cursor:not-allowed;border-color:#ccc;}
+  .method-card-label{font-size:13px;font-weight:700;color:var(--navy);}
 
   .card{
     background:var(--card);
@@ -159,7 +171,6 @@
     background:#fff;border-radius:10px;width:100%;max-width:520px;max-height:85vh;
     display:flex;flex-direction:column;overflow:hidden;
   }
-  .modal-box.modal-wide{ max-width:900px; }
   .modal-header{
     display:flex;align-items:center;justify-content:space-between;
     padding:16px 20px;border-bottom:1px solid var(--line);
@@ -174,17 +185,6 @@
     padding:8px 10px;cursor:pointer;font-size:12.5px;border-bottom:1px solid #f0f1f3;
   }
   .modal-result-item:last-child{border-bottom:none;}
-  .cube-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px;}
-  .cube-tile{
-    background:var(--accent-bg);border:1.5px solid var(--line);border-radius:10px;
-    padding:18px 16px;cursor:pointer;transition:all .15s;text-align:center;
-    display:flex;flex-direction:column;align-items:center;gap:8px;
-    min-height:110px;justify-content:center;
-  }
-  .cube-tile:hover{border-color:var(--navy);background:#eef2fb;box-shadow:0 2px 10px rgba(30,56,136,.1);}
-  .cube-tile .cube-icon{font-size:26px;}
-  .cube-tile .cube-label{font-size:13px;font-weight:700;color:var(--navy);}
-  .cube-tile .cube-badge{font-size:11px;color:var(--sub);}
   .modal-result-item:hover{background:var(--bg);}
   .modal-result-item .rname{font-weight:500;color:var(--text);}
   .modal-result-item .raddr{color:var(--sub);font-size:11.5px;margin-top:2px;}
@@ -328,7 +328,6 @@
   </div>
 
   <div class="tab-panel active" id="panel-basic">
-    <!-- 카드 1: 인적사항 -->
     <div class="card">
       <h2>인적사항</h2>
       <div class="grid">
@@ -344,122 +343,35 @@
           <label>휴대전화</label>
           <input type="text" id="debtorPhone" placeholder="010-0000-0000">
         </div>
+        <div class="field wide">
+          <label>주민등록상 주소</label>
+          <div style="display:flex;gap:6px;">
+            <input type="text" id="debtorRegAddr" placeholder="주민등록상 주소" style="flex:1;">
+            <button type="button" class="btn btn-sm" id="btnPostcode" style="flex-shrink:0;">우편번호 검색</button>
+          </div>
+        </div>
         <div class="field">
-          <label>최종학력 - 학교명</label>
-          <input type="text" id="debtorEduSchool" placeholder="예: 은오대학교">
+          <label>우편번호</label>
+          <input type="text" id="debtorZip" placeholder="00000">
         </div>
-        <div class="field">
-          <label>최종학력 - 졸업(중퇴)일자</label>
-          <input type="text" id="debtorEduDate" placeholder="26/2/1">
+        <div class="field wide">
+          <label>현 거주지</label>
+          <input type="text" id="debtorCurrentAddr" placeholder="실제 거주지 주소">
         </div>
-        <div class="field">
-          <label>최종학력 - 구분</label>
-          <select id="debtorEduStatus">
-            <option value="졸업">졸업</option>
-            <option value="중퇴">중퇴</option>
-          </select>
+        <div class="field" style="display:flex;align-items:flex-end;">
+          <label style="display:flex;align-items:center;gap:6px;font-weight:500;color:var(--text);margin-bottom:9px;cursor:pointer;">
+            <input type="checkbox" id="sameAddr" style="width:auto;">
+            주민등록상 주소와 동일(상동)
+          </label>
         </div>
       </div>
-    </div>
 
-
-    <!-- 큐브 그리드 -->
-    <div class="card" style="padding-bottom:16px;">
-      <div class="cube-grid">
-        <div class="cube-tile" id="cubeCareer">
-          <div class="cube-icon">💼</div>
-          <div class="cube-label">이력사항</div>
-          <div class="cube-badge">경력 <span id="stmtCareerCount">0</span>건</div>
-        </div>
-        <div class="cube-tile" id="cubeHousing">
-          <div class="cube-icon">🏠</div>
-          <div class="cube-label">거주지</div>
-          <div class="cube-badge">상세 <span id="housingCount">0</span>건</div>
-        </div>
-        <div class="cube-tile" id="cubeFamily">
-          <div class="cube-icon">👨‍👩‍👧</div>
-          <div class="cube-label">가족관계</div>
-          <div class="cube-badge">구성원 <span id="familyCount">0</span>건</div>
-        </div>
-        <div class="cube-tile" id="cubeMarriage">
-          <div class="cube-icon">💍</div>
-          <div class="cube-label">혼인관계</div>
-          <div class="cube-badge">이력 <span id="marriageCount">0</span>건</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 이력사항(경력) 모달 -->
-  <div class="modal-overlay" id="careerModalOverlay">
-    <div class="modal-box modal-wide">
-      <div class="modal-header">
-        <h3>💼 이력사항 (과거~현재 경력)</h3>
-        <button class="modal-close" id="careerModalClose">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="note" style="margin-bottom:10px;">과거에 그만둔 곳 포함 모든 경력을 입력하세요. 현재 직장·사업은 수입·지출 탭에서 따로 연동됩니다.</div>
-        <div style="overflow-x:auto;">
-          <table class="debt-table" id="stmtCareerTable">
-            <thead>
-              <tr>
-                <th style="width:100px;">기간 시작</th>
-                <th style="width:100px;">기간 종료</th>
-                <th style="width:70px;">현재까지</th>
-                <th style="min-width:90px;">업종</th>
-                <th style="min-width:110px;">직장명·상호</th>
-                <th style="min-width:80px;">직위</th>
-                <th style="width:90px;">구분</th>
-                <th style="width:40px;"></th>
-              </tr>
-            </thead>
-            <tbody id="stmtCareerBody"></tbody>
-          </table>
-        </div>
-        <div class="table-actions">
-          <button class="btn btn-sm" id="btnAddStmtCareer">+ 경력 추가</button>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-sm btn-dark" id="careerModalDone">닫기</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 거주지 모달 -->
-  <div class="modal-overlay" id="housingModalOverlay">
-    <div class="modal-box modal-wide">
-      <div class="modal-header">
-        <h3>🏠 거주지</h3>
-        <button class="modal-close" id="housingModalClose">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="grid">
-          <div class="field wide">
-            <label>주민등록상 주소</label>
-            <div style="display:flex;gap:6px;">
-              <input type="text" id="debtorRegAddr" placeholder="주민등록상 주소" style="flex:1;">
-              <button type="button" class="btn btn-sm" id="btnPostcode" style="flex-shrink:0;">우편번호 검색</button>
-            </div>
-          </div>
-          <div class="field">
-            <label>우편번호</label>
-            <input type="text" id="debtorZip" placeholder="00000">
-          </div>
-          <div class="field wide">
-            <label>현 거주지</label>
-            <input type="text" id="debtorCurrentAddr" placeholder="실제 거주지 주소">
-          </div>
-          <div class="field" style="display:flex;align-items:flex-end;">
-            <label style="display:flex;align-items:center;gap:6px;font-weight:500;color:var(--text);margin-bottom:9px;cursor:pointer;">
-              <input type="checkbox" id="sameAddr" style="width:auto;">
-              주민등록상 주소와 동일(상동)
-            </label>
-          </div>
-        </div>
-        <div style="border-top:1px solid var(--line);margin-top:14px;padding-top:14px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-            <span style="font-size:13px;font-weight:600;color:var(--navy);">거주지 상세내역</span>
+      <details id="housingDetails" style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px;">
+        <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--navy);">
+          거주지 상세내역 <span class="badge" id="housingCount">0건</span> <span style="font-weight:400;color:var(--sub);font-size:11.5px;">(클릭하여 펼치기/접기)</span>
+        </summary>
+        <div style="margin-top:12px;">
+          <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
             <button class="btn btn-sm" id="btnPrintHousing" type="button">거주정보 인쇄</button>
           </div>
           <div style="overflow-x:auto;">
@@ -469,14 +381,14 @@
                   <th style="width:30px;"></th>
                   <th style="width:40px;">#</th>
                   <th style="width:70px;">현재거주</th>
-                  <th style="min-width:180px;">주소</th>
-                  <th style="width:90px;">우편번호</th>
-                  <th style="width:90px;">거주형태</th>
-                  <th style="width:110px;">보증금</th>
-                  <th style="width:100px;">월 차임료</th>
-                  <th style="width:110px;">거주 시작일</th>
-                  <th style="width:110px;">거주 종료일</th>
-                  <th style="min-width:100px;">비고</th>
+                  <th style="min-width:200px;">주소</th>
+                  <th style="width:100px;">우편번호</th>
+                  <th style="width:100px;">거주형태</th>
+                  <th style="width:120px;">보증금</th>
+                  <th style="width:110px;">월 차임료</th>
+                  <th style="width:120px;">거주 시작일</th>
+                  <th style="width:120px;">거주 종료일</th>
+                  <th style="min-width:110px;">비고</th>
                   <th style="width:40px;"></th>
                 </tr>
               </thead>
@@ -485,51 +397,13 @@
           </div>
           <div class="table-actions">
             <button class="btn btn-sm" id="btnAddHousing">+ 거주정보 추가</button>
-            <div class="note">거주 종료일을 비워두면 "현재까지"로 인쇄됩니다.</div>
+            <div class="note">위쪽 "주민등록상 주소/현 거주지"는 서류에 바로 쓰이는 요약 정보이고, 여기는 보정 대응용 상세 이력(5년치 등)입니다. 두 곳은 서로 자동 연동되지 않으니 각각 입력해주세요. 거주 종료일을 비워두면 "현재까지"로 인쇄됩니다. 순서는 ⠿ 아이콘을 끌어서 바꿀 수 있습니다.</div>
           </div>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-sm btn-dark" id="housingModalDone">닫기</button>
-      </div>
+      </details>
     </div>
-  </div>
 
-  <!-- 가족관계 모달 -->
-  <div class="modal-overlay" id="familyModalOverlay">
-    <div class="modal-box modal-wide">
-      <div class="modal-header">
-        <h3>👨‍👩‍👧 가족관계</h3>
-        <button class="modal-close" id="familyModalClose">✕</button>
-      </div>
-      <div class="modal-body">
-        <div style="overflow-x:auto;">
-          <table class="debt-table" id="familyTable">
-            <thead>
-              <tr>
-                <th style="width:40px;">#</th>
-                <th style="width:100px;">관계</th>
-                <th style="min-width:110px;">성명</th>
-                <th style="width:130px;">생년월일</th>
-                <th style="min-width:100px;">직업</th>
-                <th style="width:90px;">동거기간</th>
-                <th style="width:40px;"></th>
-              </tr>
-            </thead>
-            <tbody id="familyBody"></tbody>
-          </table>
-        </div>
-        <div class="table-actions">
-          <button class="btn btn-sm" id="btnAddFamily">+ 가족 추가</button>
-          <div class="note">동거여부·부양여부는 수입·지출 탭에서 설정합니다.</div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-sm btn-dark" id="familyModalDone">닫기</button>
-      </div>
-    </div>
   </div>
-
 
   <div class="tab-panel" id="panel-creditors">
     <div class="card">
@@ -541,7 +415,6 @@
           <span class="badge" id="creditorCount">0건</span>
         </span>
       </h2>
-      <div class="note" style="margin-bottom:10px;">전자소송 "채권자목록(파산) 입력파일" 양식(18개 컬럼: 체크/채권자목록번호/보증인번호/채권자명/보증인명/도로명주소1·2/우편번호/휴대전화·전화·팩스/이메일/차용또는구입일자/발생원인/최초채권액/사용처/잔존원금/잔존이자및지연손해금)에 맞춰 다운로드됩니다. 채권성격이 "보증채무"이고 연결된 주채무자가 있는 행은 자동으로 보증인 서브행(보증인번호 1, 발생원인 4)으로 처리됩니다. <b>다운로드 파일은 UTF-8입니다</b> — 전자소송 업로드가 인코딩 오류로 거부되면, 메모장에서 열어 "다른 이름으로 저장" → 인코딩을 "ANSI"로 선택해 CP949로 다시 저장한 뒤 업로드해보세요. 주소·전화번호 안에 쉼표(,)가 있으면 자동으로 제거됩니다.</div>
       <div style="overflow-x:auto;">
         <table class="debt-table" id="debtTable">
           <thead>
@@ -566,9 +439,7 @@
       </div>
       <div class="table-actions">
         <button class="btn btn-sm" id="btnAddRow">+ 채권 추가</button>
-        <div class="note">⠿ 아이콘을 끌어서 위/아래로 놓으면 순서만 바뀌고, 다른 행 위(가운데)에 놓으면 그 채권자의 하위 항목(가지번호)으로 연결됩니다. ⌕ 버튼을 누르면 채권자 DB(494건) 검색 및 주소·우편번호·전화번호·참조 상세정보를 확인·수정할 수 있어요(✓ 표시는 정보가 채워진 채권자).</div>
       </div>
-      <div class="note" style="margin-top:6px;">보증채무: 원채권자 행의 <b>+구상</b> 버튼으로 장래구상채권 행을 만들거나, 채권자 행을 다른 원채권자 위로 끌어다 놓으면 자동으로 하위 항목(예: 3-1)이 됩니다. 장래구상채권은 과목·원금·이자가 자동으로 "미발생" 처리되며, 보증인이 실제로 대위변제하면 성격을 <b>구상채권</b>으로 바꿔 금액을 입력할 수 있습니다.</div>
     </div>
 
     <div class="card">
@@ -613,123 +484,18 @@
       </div>
     </div>
 
-    <!-- 재산항목 큐브 그리드 (3행 × 4열) -->
-    <div class="card" style="padding-bottom:16px;">
-      <div style="font-size:12px;color:var(--sub);margin-bottom:8px;">항목을 클릭하면 상세 입력 창이 열립니다.</div>
-      <div class="cube-grid" style="grid-template-columns:repeat(4,1fr);">
-        <div class="cube-tile" id="cubeCash">
-          <div class="cube-icon">💰</div>
-          <div class="cube-label">현금</div>
-          <div class="cube-badge"><span class="cube-amount" id="cube_cashDisplay">0원</span></div>
-        </div>
-        <div class="cube-tile" id="cubeDeposit">
-          <div class="cube-icon">🏦</div>
-          <div class="cube-label">예금</div>
-          <div class="cube-badge"><span class="cube-badge-count" id="depositCount">0</span>건 · <span class="cube-amount" id="cube_depositSumDisplay">0원</span></div>
-        </div>
-        <div class="cube-tile" id="cubeInsurance">
-          <div class="cube-icon">📋</div>
-          <div class="cube-label">보험</div>
-          <div class="cube-badge"><span class="cube-badge-count" id="insuranceCount">0</span>건 · <span class="cube-amount" id="cube_insuranceSumDisplay">0원</span></div>
-        </div>
-        <div class="cube-tile" id="cubeVehicle">
-          <div class="cube-icon">🚗</div>
-          <div class="cube-label">자동차</div>
-          <div class="cube-badge"><span class="cube-badge-count" id="vehicleCount">0</span>건 · <span class="cube-amount" id="cube_vehicleSumDisplay">0원</span></div>
-        </div>
-        <div class="cube-tile" id="cubeLease">
-          <div class="cube-icon">🔑</div>
-          <div class="cube-label">임차보증금</div>
-          <div class="cube-badge"><span class="cube-badge-count" id="leaseCount">0</span>건 · <span class="cube-amount" id="cube_leaseSumDisplay">0원</span></div>
-        </div>
-        <div class="cube-tile" id="cubeRealty">
-          <div class="cube-icon">🏢</div>
-          <div class="cube-label">부동산</div>
-          <div class="cube-badge"><span class="cube-badge-count" id="realtyCount">0</span>건 · <span class="cube-amount" id="cube_realtySumDisplay">0원</span></div>
-        </div>
-        <div class="cube-tile" id="cubeEquip">
-          <div class="cube-icon">🔧</div>
-          <div class="cube-label">사업용 설비</div>
-          <div class="cube-badge"><span class="cube-badge-count" id="equipCount">0</span>건 · <span class="cube-amount" id="cube_equipSumDisplay">0원</span></div>
-        </div>
-        <div class="cube-tile" id="cubeLoanRec">
-          <div class="cube-icon">📄</div>
-          <div class="cube-label">대여금 채권</div>
-          <div class="cube-badge"><span class="cube-badge-count" id="loanReceivableCount">0</span>건 · <span class="cube-amount" id="cube_loanRecSumDisplay">0원</span></div>
-        </div>
-        <div class="cube-tile" id="cubeSalesRec">
-          <div class="cube-icon">📑</div>
-          <div class="cube-label">매출금 채권</div>
-          <div class="cube-badge"><span class="cube-badge-count" id="salesReceivableCount">0</span>건 · <span class="cube-amount" id="cube_salesRecSumDisplay">0원</span></div>
-        </div>
-        <div class="cube-tile" id="cubeSeverance">
-          <div class="cube-icon">💼</div>
-          <div class="cube-label">예상 퇴직금</div>
-          <div class="cube-badge"><span class="cube-amount" id="cube_severanceDisplay">0원</span></div>
-        </div>
-        <div class="cube-tile" id="cubeOther">
-          <div class="cube-icon">📦</div>
-          <div class="cube-label">기타 재산</div>
-          <div class="cube-badge"><span class="cube-badge-count" id="otherCount">0</span>건 · <span class="cube-amount" id="cube_otherSumDisplay">0원</span></div>
-        </div>
-        <div class="cube-tile" id="cubeExemption">
-          <div class="cube-icon">🛡️</div>
-          <div class="cube-label">면제재산</div>
-          <div class="cube-badge"><span class="cube-badge-count" id="exemptionCount">0</span>건 · <span class="cube-amount" id="cube_exemptionSumDisplay">0원</span></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 합계 카드 -->
     <div class="card">
-      <h2>합계</h2>
-      <div class="summary-strip" style="grid-template-columns:repeat(3,1fr);">
-        <div class="box">
-          <div class="label">재산목록 합계</div>
-          <div class="value" id="assetTotalDisplay">0원</div>
-        </div>
-        <div class="box">
-          <div class="label">면제재산 결정신청 금액</div>
-          <div class="value" id="exemptionDisplay">0원</div>
-        </div>
-        <div class="box">
-          <div class="label">청산가치</div>
-          <div class="value" id="liquidationValueDisplay">0원</div>
-        </div>
-      </div>
-      <div class="note">청산가치 = 재산목록 합계 - 면제재산 결정신청 금액. 채권자목록 탭의 채무 총액과 함께 변제계획안 작성 시 사용됩니다.</div>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="cashModalOverlay">
-    <div class="modal-box modal-wide">
-      <div class="modal-header">
-        <h3>💰 현금</h3>
-        <button class="modal-close" id="cashModalClose">&#x2715;</button>
-      </div>
-      <div class="modal-body">
-<h2>현금</h2>
+      <h2>현금</h2>
       <div class="grid g2">
         <div class="field">
           <label>현금 보유액</label>
           <input type="text" id="assetCash" placeholder="0">
         </div>
       </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-sm btn-dark" id="cashModalDone">닫기</button>
-      </div>
     </div>
-  </div>
 
-  <div class="modal-overlay" id="depositModalOverlay">
-    <div class="modal-box modal-wide">
-      <div class="modal-header">
-        <h3>🏦 예금</h3>
-        <button class="modal-close" id="depositModalClose">&#x2715;</button>
-      </div>
-      <div class="modal-body">
-<h2>예금 <span class="badge" id="modal_depositCount">0건</span></h2>
+    <div class="card">
+      <h2>예금 <span class="badge" id="depositCount">0건</span></h2>
       <div style="overflow-x:auto;">
         <table class="debt-table" id="depositTable">
           <thead>
@@ -748,22 +514,11 @@
         <button class="btn btn-sm" id="btnAddDeposit">+ 예금 추가</button>
         <div class="note">잔고 합계 중 250만원까지는 압류금지채권으로 재산목록 합계에서 자동 공제됩니다. 현재 예금 합계: <span id="depositSumDisplay">0원</span> → 재산 반영액: <span id="depositNetDisplay">0원</span></div>
       </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-sm btn-dark" id="depositModalDone">닫기</button>
-      </div>
     </div>
-  </div>
 
-  <div class="modal-overlay" id="insuranceModalOverlay">
-    <div class="modal-box modal-wide">
-      <div class="modal-header">
-        <h3>📋 보험</h3>
-        <button class="modal-close" id="insuranceModalClose">&#x2715;</button>
-      </div>
-      <div class="modal-body">
-<h2>
-        <span>보험 <span class="badge" id="modal_insuranceCount">0건</span></span>
+    <div class="card">
+      <h2>
+        <span>보험 <span class="badge" id="insuranceCount">0건</span></span>
         <button class="btn btn-sm" id="btnPrintInsurance" type="button">보험현황 인쇄</button>
       </h2>
       <div style="overflow-x:auto;">
@@ -790,21 +545,10 @@
         <button class="btn btn-sm" id="btnAddInsurance">+ 보험 추가</button>
         <div class="note">해약환급금 합계 중 250만원까지는 압류금지채권으로 자동 공제됩니다. 현재 해약환급금 합계: <span id="insuranceSumDisplay">0원</span> → 재산 반영액: <span id="insuranceNetDisplay">0원</span></div>
       </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-sm btn-dark" id="insuranceModalDone">닫기</button>
-      </div>
     </div>
-  </div>
 
-  <div class="modal-overlay" id="vehicleModalOverlay">
-    <div class="modal-box modal-wide">
-      <div class="modal-header">
-        <h3>🚗 자동차 (오토바이 포함)</h3>
-        <button class="modal-close" id="vehicleModalClose">&#x2715;</button>
-      </div>
-      <div class="modal-body">
-<h2>자동차 <span style="font-weight:400;font-size:12px;color:var(--sub);">(오토바이 포함)</span> <span class="badge" id="modal_vehicleCount">0건</span></h2>
+    <div class="card">
+      <h2>자동차 <span style="font-weight:400;font-size:12px;color:var(--sub);">(오토바이 포함)</span> <span class="badge" id="vehicleCount">0건</span></h2>
       <div style="overflow-x:auto;">
         <table class="debt-table" id="vehicleTable">
           <thead>
@@ -828,21 +572,10 @@
         <button class="btn btn-sm" id="btnAddVehicle">+ 자동차 추가</button>
         <div class="note">각 차량의 시세1·시세2 평균가가 재산목록에 자동 반영됩니다. 담보권 칸에서 채권목록의 담보채권을 불러와 연동하면, 그 금액만큼 <b>자동으로 차감</b>되어 재산목록 합계에 반영됩니다.</div>
       </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-sm btn-dark" id="vehicleModalDone">닫기</button>
-      </div>
     </div>
-  </div>
 
-  <div class="modal-overlay" id="leaseModalOverlay">
-    <div class="modal-box modal-wide">
-      <div class="modal-header">
-        <h3>🔑 임차보증금</h3>
-        <button class="modal-close" id="leaseModalClose">&#x2715;</button>
-      </div>
-      <div class="modal-body">
-<h2>임차보증금 <span style="font-weight:400;font-size:12px;color:var(--sub);">(반환받을 금액 기준)</span> <span class="badge" id="modal_leaseCount">0건</span></h2>
+    <div class="card">
+      <h2>임차보증금 <span style="font-weight:400;font-size:12px;color:var(--sub);">(반환받을 금액 기준)</span> <span class="badge" id="leaseCount">0건</span></h2>
       <div style="overflow-x:auto;">
         <table class="debt-table" id="leaseTable">
           <thead>
@@ -865,21 +598,10 @@
         <button class="btn btn-sm" id="btnAddLease">+ 임차보증금 추가</button>
         <div class="note">민사집행법 제246조 제1항 제6호 압류금지채권 참고: 서울 보호대상 1억 6,500만원 이하 / 우선변제 5,500만원, 수도권과밀 1억 4,500만원 / 4,800만원, 광역시 등 8,500만원 / 2,800만원, 그 밖 지역 7,500만원 / 2,500만원 (2023.2.21. 개정 기준). "사유"에서 246조 6호를 선택하면 지역별로 자동 공제되고, "반환/회수 곤란"을 선택하면 실반환가능액을 직접 입력한 값이 재산에 반영되며, "질권설정"을 선택하면 채권목록의 담보채권을 불러와 그 금액만큼 보증금에서 자동 공제됩니다.</div>
       </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-sm btn-dark" id="leaseModalDone">닫기</button>
-      </div>
     </div>
-  </div>
 
-  <div class="modal-overlay" id="realtyModalOverlay">
-    <div class="modal-box modal-wide">
-      <div class="modal-header">
-        <h3>🏢 부동산</h3>
-        <button class="modal-close" id="realtyModalClose">&#x2715;</button>
-      </div>
-      <div class="modal-body">
-<h2>부동산 <span style="font-weight:400;font-size:12px;color:var(--sub);">(환가예상액 - 피담보채권 = 금액란)</span> <span class="badge" id="modal_realtyCount">0건</span></h2>
+    <div class="card">
+      <h2>부동산 <span style="font-weight:400;font-size:12px;color:var(--sub);">(환가예상액 - 피담보채권 = 금액란)</span> <span class="badge" id="realtyCount">0건</span></h2>
       <div style="overflow-x:auto;">
         <table class="debt-table" id="realtyTable">
           <thead>
@@ -901,21 +623,10 @@
         <button class="btn btn-sm" id="btnAddRealty">+ 부동산 추가</button>
         <div class="note">배우자 명의 부동산은 담보권 정보가 "해당사항 없음"으로 고정됩니다. 본인 명의인 경우, 담보권 칸의 드롭다운으로 채권목록의 담보채권을 불러와 연동하면 <b>환가예상액에서 그 금액만큼 자동 차감</b>되어 재산목록 합계에 반영됩니다.</div>
       </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-sm btn-dark" id="realtyModalDone">닫기</button>
-      </div>
     </div>
-  </div>
 
-  <div class="modal-overlay" id="equipModalOverlay">
-    <div class="modal-box modal-wide">
-      <div class="modal-header">
-        <h3>🔧 사업용 설비 · 재고품 · 비품</h3>
-        <button class="modal-close" id="equipModalClose">&#x2715;</button>
-      </div>
-      <div class="modal-body">
-<h2>사업용 설비 · 재고품 · 비품 등 <span class="badge" id="modal_equipCount">0건</span></h2>
+    <div class="card">
+      <h2>사업용 설비 · 재고품 · 비품 등 <span class="badge" id="equipCount">0건</span></h2>
       <div style="overflow-x:auto;">
         <table class="debt-table" id="equipTable">
           <thead>
@@ -933,21 +644,10 @@
       <div class="table-actions">
         <button class="btn btn-sm" id="btnAddEquip">+ 항목 추가</button>
       </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-sm btn-dark" id="equipModalDone">닫기</button>
-      </div>
     </div>
-  </div>
 
-  <div class="modal-overlay" id="loanRecModalOverlay">
-    <div class="modal-box modal-wide">
-      <div class="modal-header">
-        <h3>📄 대여금 채권</h3>
-        <button class="modal-close" id="loanRecModalClose">&#x2715;</button>
-      </div>
-      <div class="modal-body">
-<h2>대여금 채권 <span class="badge" id="modal_loanReceivableCount">0건</span></h2>
+    <div class="card">
+      <h2>대여금 채권 <span class="badge" id="loanReceivableCount">0건</span></h2>
       <div style="overflow-x:auto;">
         <table class="debt-table" id="loanReceivableTable">
           <thead>
@@ -965,21 +665,10 @@
       <div class="table-actions">
         <button class="btn btn-sm" id="btnAddLoanReceivable">+ 대여금채권 추가</button>
       </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-sm btn-dark" id="loanRecModalDone">닫기</button>
-      </div>
     </div>
-  </div>
 
-  <div class="modal-overlay" id="salesRecModalOverlay">
-    <div class="modal-box modal-wide">
-      <div class="modal-header">
-        <h3>📑 매출금 채권</h3>
-        <button class="modal-close" id="salesRecModalClose">&#x2715;</button>
-      </div>
-      <div class="modal-body">
-<h2>매출금 채권 <span class="badge" id="modal_salesReceivableCount">0건</span></h2>
+    <div class="card">
+      <h2>매출금 채권 <span class="badge" id="salesReceivableCount">0건</span></h2>
       <div style="overflow-x:auto;">
         <table class="debt-table" id="salesReceivableTable">
           <thead>
@@ -997,21 +686,10 @@
       <div class="table-actions">
         <button class="btn btn-sm" id="btnAddSalesReceivable">+ 매출금채권 추가</button>
       </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-sm btn-dark" id="salesRecModalDone">닫기</button>
-      </div>
     </div>
-  </div>
 
-  <div class="modal-overlay" id="severanceModalOverlay">
-    <div class="modal-box modal-wide">
-      <div class="modal-header">
-        <h3>💼 예상 퇴직금</h3>
-        <button class="modal-close" id="severanceModalClose">&#x2715;</button>
-      </div>
-      <div class="modal-body">
-<h2>예상 퇴직금</h2>
+    <div class="card">
+      <h2>예상 퇴직금</h2>
       <div class="grid">
         <div class="field">
           <label>근무처</label>
@@ -1029,21 +707,10 @@
         </div>
       </div>
       <div class="note" style="margin-top:8px;" id="severanceNote">압류할 수 없는 퇴직금(1/2)은 제외되어, 재산 반영액은 총액의 절반입니다: <span id="severanceNetDisplay">0원</span></div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-sm btn-dark" id="severanceModalDone">닫기</button>
-      </div>
     </div>
-  </div>
 
-  <div class="modal-overlay" id="otherModalOverlay">
-    <div class="modal-box modal-wide">
-      <div class="modal-header">
-        <h3>📦 기타 재산</h3>
-        <button class="modal-close" id="otherModalClose">&#x2715;</button>
-      </div>
-      <div class="modal-body">
-<h2>기타 재산 <span class="badge" id="modal_otherCount">0건</span></h2>
+    <div class="card">
+      <h2>기타 재산 <span class="badge" id="otherCount">0건</span></h2>
       <div style="overflow-x:auto;">
         <table class="debt-table" id="otherTable">
           <thead>
@@ -1060,21 +727,10 @@
       <div class="table-actions">
         <button class="btn btn-sm" id="btnAddOther">+ 기타재산 추가</button>
       </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-sm btn-dark" id="otherModalDone">닫기</button>
-      </div>
     </div>
-  </div>
 
-  <div class="modal-overlay" id="exemptionModalOverlay">
-    <div class="modal-box modal-wide">
-      <div class="modal-header">
-        <h3>🛡 면제재산 결정신청</h3>
-        <button class="modal-close" id="exemptionModalClose">&#x2715;</button>
-      </div>
-      <div class="modal-body">
-<h2>면제재산 결정신청 <span class="badge" id="modal_exemptionCount">0건</span></h2>
+    <div class="card">
+      <h2>면제재산 결정신청 <span class="badge" id="exemptionCount">0건</span></h2>
       <div style="overflow-x:auto;">
         <table class="debt-table" id="exemptionTable">
           <thead>
@@ -1093,13 +749,27 @@
         <button class="btn btn-sm" id="btnAddExemption">+ 면제재산 항목 추가</button>
         <div class="note">특정 재산항목을 연계하면 해당 항목의 현재 금액이 자동으로 따라오고(중복공제 방지), 이미 다른 줄에서 선택된 항목은 목록에서 빠집니다. "직접입력"을 선택하면 금액을 임의로 넣을 수 있어요 (예: 압류금지채권과 무관하게 법원이 별도로 요구하는 면제재산).</div>
       </div>
+    </div>
+
+    <div class="card">
+      <h2>합계</h2>
+      <div class="summary-strip" style="grid-template-columns:repeat(3,1fr);">
+        <div class="box">
+          <div class="label">재산목록 합계</div>
+          <div class="value" id="assetTotalDisplay">0원</div>
+        </div>
+        <div class="box">
+          <div class="label">면제재산 결정신청 금액</div>
+          <div class="value" id="exemptionDisplay">0원</div>
+        </div>
+        <div class="box">
+          <div class="label">청산가치</div>
+          <div class="value" id="liquidationValueDisplay">0원</div>
+        </div>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-sm btn-dark" id="exemptionModalDone">닫기</button>
-      </div>
+      <div class="note">청산가치 = 재산목록 합계 - 면제재산 결정신청 금액. 채권자목록 탭의 채무 총액과 함께 변제계획안 작성 시 사용됩니다.</div>
     </div>
   </div>
-
 
   <div class="tab-panel" id="panel-income">
     <div class="card" style="padding:12px 22px;">
@@ -1227,80 +897,105 @@
 
   <div class="tab-panel" id="panel-repayment">
     <div class="card">
-      <h2>변제 시나리오 설정</h2>
-      <div class="grid">
-        <div class="field full">
-          <label>변제방식</label>
-          <div class="procedure-toggle" id="repayMethodToggle" style="margin-bottom:0;">
-            <button data-val="36months" class="active">기본 36개월</button>
-            <button data-val="principal100">원금 100%</button>
-            <button data-val="principalInterest100">원리금 100%</button>
-          </div>
+      <h2 style="display:flex;justify-content:space-between;align-items:center;">
+        <span>변제방식</span>
+        <span style="display:flex;gap:6px;">
+          <button class="btn btn-sm" id="btnPrintBoth" type="button">📄 인쇄 미리보기</button>
+          <button class="btn btn-sm" id="btnPrintRepaymentPlan" type="button">변제계획안</button>
+          <button class="btn btn-sm" id="btnPrintRepaymentSchedule" type="button">변제예정액표</button>
+        </span>
+      </h2>
+
+      <!-- ① 기본 변제방식 (4개 배타 선택) -->
+      <div id="repayMethodToggle" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">
+        <div class="method-card" data-val="36months" id="methodCard_36months">
+          <div class="method-card-label">기본형</div>
+          <div class="method-card-sub" id="methodSub_36months" style="font-size:11px;color:var(--sub);margin-top:3px;"></div>
+          <div class="method-card-status" id="methodStatus_36months" style="font-size:11px;margin-top:4px;font-weight:600;"></div>
         </div>
-        <div class="field" id="repayMonthsField">
-          <label>변제개월수</label>
-          <input type="text" id="repayMonths" placeholder="36">
+        <div class="method-card" data-val="principal100" id="methodCard_principal100">
+          <div class="method-card-label">원금 100%</div>
+          <div class="method-card-sub" id="methodSub_principal100" style="font-size:11px;color:var(--sub);margin-top:3px;"></div>
+          <div class="method-card-status" id="methodStatus_principal100" style="font-size:11px;margin-top:4px;font-weight:600;"></div>
+        </div>
+        <div class="method-card" data-val="principalFirst" id="methodCard_principalFirst">
+          <div class="method-card-label">원금+이자 분리</div>
+          <div class="method-card-sub" id="methodSub_principalFirst" style="font-size:11px;color:var(--sub);margin-top:3px;">원금 완납 후 이자 상환</div>
+          <div class="method-card-status" id="methodStatus_principalFirst" style="font-size:11px;margin-top:4px;font-weight:600;"></div>
+        </div>
+        <div class="method-card" data-val="principalInterest100" id="methodCard_principalInterest100">
+          <div class="method-card-label">원리금 100%</div>
+          <div class="method-card-sub" id="methodSub_principalInterest100" style="font-size:11px;color:var(--sub);margin-top:3px;"></div>
+          <div class="method-card-status" id="methodStatus_principalInterest100" style="font-size:11px;margin-top:4px;font-weight:600;"></div>
         </div>
       </div>
 
-      <div class="grid" style="margin-top:14px;">
-        <div class="field" style="display:flex;align-items:flex-end;">
-          <label style="display:flex;align-items:center;gap:6px;font-weight:500;color:var(--text);margin-bottom:9px;cursor:pointer;">
+      <!-- 변제기간 (기본형만 표시) -->
+      <div id="repayMonthsField" style="display:none;margin-bottom:14px;">
+        <label style="font-size:12px;font-weight:600;color:var(--sub);display:block;margin-bottom:6px;">변제기간 (최대 60개월)</label>
+        <input type="text" id="repayMonths" placeholder="36" style="width:80px;padding:7px 10px;border:1px solid var(--line);border-radius:6px;font-size:13px;">
+      </div>
+
+      <!-- ② 추가 옵션 구분선 -->
+      <div style="height:1px;background:var(--line);margin:4px 0 14px;"></div>
+      <div style="font-size:11.5px;font-weight:600;color:var(--sub);margin-bottom:10px;letter-spacing:0.3px;">추가 옵션 <span style="font-weight:400;">(변제방식과 독립적으로 조합 가능)</span></div>
+
+      <!-- ② 추가 옵션 3종 -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+
+        <!-- 외부회생위원 -->
+        <div style="border:1px solid var(--line);border-radius:8px;padding:12px 14px;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--navy);">
             <input type="checkbox" id="hasExternalCommittee" style="width:auto;">
             외부회생위원 선임
           </label>
-        </div>
-        <div class="field" id="committeeFeeField" style="display:none;">
-          <label>보수율(%)</label>
-          <input type="text" id="committeeFeeRate" placeholder="예: 3">
-        </div>
-      </div>
-
-      <div class="grid" style="margin-top:14px;">
-        <div class="field full">
-          <label>우선채권 여부 (세금 등 우선변제권 있는 채권 포함 여부)</label>
-          <div class="procedure-toggle" id="priorityClaimToggle" style="margin-bottom:0;">
-            <button data-val="false" class="active">없음</button>
-            <button data-val="true">있음</button>
+          <div id="committeeFeeField" style="display:none;margin-top:10px;">
+            <div class="field" style="margin-bottom:8px;"><label>보수율(%)</label><input type="text" id="committeeFeeRate" placeholder="예: 3"></div>
+          </div>
+          <div id="committeePreApprovalField" style="display:none;margin-top:0;">
+            <div class="field"><label>인가결정 이전 보수 (원)</label><input type="text" id="committeePreApprovalFee" placeholder="예: 500,000"></div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <div class="card">
-      <details id="specialFundDetails">
-        <summary style="cursor:pointer;font-size:14px;font-weight:700;color:var(--navy);">
-          특수재원 투입 <span style="font-weight:400;color:var(--sub);font-size:11.5px;">(클릭하여 펼치기/접기)</span>
-        </summary>
-        <div style="margin-top:12px;">
-          <div class="grid">
-            <div class="field full" style="display:flex;align-items:center;">
-              <label style="display:flex;align-items:center;gap:6px;font-weight:500;color:var(--text);cursor:pointer;">
-                <input type="checkbox" id="seizureFundEnabled" style="width:auto;">
-                압류적립금 투입
-              </label>
-            </div>
-          </div>
-          <div class="grid" id="seizureFundFields" style="display:none;margin-top:8px;">
-            <div class="field"><label>투입 금액</label><input type="text" id="seizureFundAmount" placeholder="0"></div>
+        <!-- 압류적립금 -->
+        <div style="border:1px solid var(--line);border-radius:8px;padding:12px 14px;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--navy);">
+            <input type="checkbox" id="seizureFundEnabled" style="width:auto;">
+            압류적립금 1회 투입형
+          </label>
+          <div id="seizureFundInputs" style="display:none;margin-top:10px;">
+            <div class="field" style="margin-bottom:8px;"><label>투입 금액</label><input type="text" id="seizureFundAmount" placeholder="0"></div>
             <div class="field"><label>투입 회차</label><input type="text" id="seizureFundRound" placeholder="1"></div>
           </div>
+        </div>
 
-          <div class="grid" style="margin-top:14px;">
-            <div class="field full" style="display:flex;align-items:center;">
-              <label style="display:flex;align-items:center;gap:6px;font-weight:500;color:var(--text);cursor:pointer;">
-                <input type="checkbox" id="assetLiquidationEnabled" style="width:auto;">
-                재산처분형 투입
-              </label>
+        <!-- 재산처분형 -->
+        <div style="border:1px solid var(--line);border-radius:8px;padding:12px 14px;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--navy);">
+            <input type="checkbox" id="assetLiquidationEnabled" style="width:auto;">
+            재산처분형
+          </label>
+          <div id="assetLiquidationInputs" style="display:none;margin-top:10px;">
+            <div class="field" style="margin-bottom:8px;"><label>처분 금액</label><input type="text" id="assetLiquidationAmount" placeholder="0"></div>
+            <div class="field">
+              <label>처분 기한</label>
+              <div class="procedure-toggle" id="assetLiquidationRoundToggle" style="margin-bottom:0;">
+                <button data-val="12">1년 이내</button>
+                <button data-val="24">2년 이내</button>
+                <button data-val="36">3년 이내</button>
+              </div>
+              <input type="hidden" id="assetLiquidationRound" value="12">
             </div>
           </div>
-          <div class="grid" id="assetLiquidationFields" style="display:none;margin-top:8px;">
-            <div class="field"><label>투입 금액</label><input type="text" id="assetLiquidationAmount" placeholder="0"></div>
-            <div class="field"><label>투입 예정 회차</label><input type="text" id="assetLiquidationRound" placeholder="예: 1"></div>
-          </div>
         </div>
-      </details>
+
+      </div>
+
+      <!-- 우선채권 안내 -->
+      <div class="note" style="margin-top:14px;">우선채권 여부는 <b>채권자목록 탭</b>에서 구분을 "우선"으로 설정한 채권을 기준으로 변제계획(안) 인쇄 시 자동 반영됩니다.</div>
     </div>
+
+
 
     <div class="card">
       <details id="miscDetails">
@@ -1320,10 +1015,6 @@
     <div class="card">
       <h2>
         <span>시뮬레이션 요약 <span style="font-weight:400;font-size:12px;color:var(--sub);">(다른 탭의 입력값을 기준으로 실시간 계산)</span></span>
-        <span style="display:flex;gap:8px;">
-          <button class="btn btn-sm" id="btnPrintRepaymentSchedule" type="button">변제예정액표 인쇄</button>
-          <button class="btn btn-sm" id="btnPrintRepaymentPlan" type="button">변제계획안 인쇄</button>
-        </span>
       </h2>
       <div class="summary-strip" style="grid-template-columns:repeat(3,1fr);">
         <div class="box"><div class="label">채권목록 채무 총액</div><div class="value" id="repayTotalDebt">0원</div></div>
@@ -1350,8 +1041,63 @@
 
     <div class="card">
       <h2>Ⅰ. 경력</h2>
-      <div class="note">경력 정보는 <b>인적사항 탭 → 이력사항</b> 카드에서 입력합니다. 입력한 내용이 진술서 인쇄 시 자동으로 반영됩니다.</div>
-      <div class="note" style="margin-top:6px;">최종학력 → 인적사항 카드 &nbsp;|&nbsp; 과거·현재 경력 → 이력사항 카드 &nbsp;|&nbsp; 혼인관계 → 혼인관계 카드 &nbsp;|&nbsp; 현재 직장·사업 → 수입·지출 탭</div>
+      <div style="font-size:12.5px;font-weight:600;color:var(--navy);margin-bottom:8px;">1. 최종학력</div>
+      <div class="grid">
+        <div class="field"><label>졸업(중퇴)일자</label><input type="text" id="stmtEduDate" placeholder="26/2/1"></div>
+        <div class="field">
+          <label>구분</label>
+          <select id="stmtEduStatus"><option value="졸업">졸업</option><option value="중퇴">중퇴</option></select>
+        </div>
+      </div>
+
+      <div style="height:1px;background:var(--line);margin:16px 0;"></div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:12.5px;font-weight:600;color:var(--navy);">2. 과거 경력 <span style="font-weight:400;color:var(--sub);font-size:11.5px;">(최근 경력부터 기재)</span> <span class="badge" id="stmtCareerCount">0건</span></div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="debt-table" id="stmtCareerTable">
+          <thead>
+            <tr>
+              <th style="width:100px;">기간 시작</th>
+              <th style="width:100px;">기간 종료</th>
+              <th style="width:70px;">현재까지</th>
+              <th style="min-width:90px;">업종</th>
+              <th style="min-width:100px;">직장명</th>
+              <th style="min-width:80px;">직위</th>
+              <th style="width:90px;">구분</th>
+              <th style="width:40px;"></th>
+            </tr>
+          </thead>
+          <tbody id="stmtCareerBody"></tbody>
+        </table>
+      </div>
+      <div class="table-actions">
+        <button class="btn btn-sm" id="btnAddStmtCareer">+ 경력 추가</button>
+      </div>
+
+      <div style="height:1px;background:var(--line);margin:16px 0;"></div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:12.5px;font-weight:600;color:var(--navy);">3. 과거 결혼, 이혼, 입양, 파양 경력 <span class="badge" id="stmtMarriageCount">0건</span></div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="debt-table" id="stmtMarriageTable">
+          <thead>
+            <tr>
+              <th style="width:120px;">일자</th>
+              <th style="min-width:100px;">상대방</th>
+              <th style="width:100px;">구분</th>
+              <th style="width:40px;"></th>
+            </tr>
+          </thead>
+          <tbody id="stmtMarriageBody"></tbody>
+        </table>
+      </div>
+      <div class="table-actions">
+        <button class="btn btn-sm" id="btnAddStmtMarriage">+ 이력 추가</button>
+        <div class="note">혼인·이혼·재혼·사별 등 여러 건을 순서대로 추가할 수 있습니다.</div>
+      </div>
     </div>
 
     <div class="card">
@@ -1659,7 +1405,7 @@ let state = {
   repayBankName: '',
   repayBankAccount: '',
   draftDate: '',
-  debtor: { name:'', rrn:'', phone:'', regAddress:'', currentAddress:'', sameAsReg:true, zip:'', finalEducation: { date:'', status:'졸업', school:'' } },
+  debtor: { name:'', rrn:'', phone:'', regAddress:'', currentAddress:'', sameAsReg:true, zip:'' },
   creditors: [],
   family: [],
   marriageHistory: [],
@@ -1675,15 +1421,20 @@ let state = {
   repaymentPlan: {
     method: '36months',
     months: '36',
+    seizureFundMonths: '36',
+    assetLiquidationMonths: '36',
     hasExternalCommittee: false,
     committeeFeeRate: '',
+    committeePreApprovalFee: '',
     hasPriorityClaim: false,
     seizureFund: { enabled: false, amount: '', round: '1' },
     assetLiquidation: { enabled: false, amount: '', round: '' },
     miscClause: ''
   },
   statement: {
+    finalEducation: { date: '', status: '졸업' },
     pastCareers: [],
+    pastMarriageEvents: [],
     housing: {
       startDate: '', type: 'own',
       leaseDeposit: '', leaseRent: '', leaseOverdue: '', leaseTenantName: '',
@@ -1736,9 +1487,7 @@ function load(){
       state = Object.assign(state, parsed);
     }
   }catch(e){ console.error('load failed', e); }
-  if(!state.debtor) state.debtor = { name:'', rrn:'', phone:'', regAddress:'', currentAddress:'', sameAsReg:true, zip:'', finalEducation: { date:'', status:'졸업', school:'' } };
-  if(!state.debtor.finalEducation) state.debtor.finalEducation = { date:'', status:'졸업', school:'' };
-  if(state.debtor.finalEducation.school === undefined) state.debtor.finalEducation.school = '';
+  if(!state.debtor) state.debtor = { name:'', rrn:'', phone:'', regAddress:'', currentAddress:'', sameAsReg:true, zip:'' };
   if(state.debtor.sameAsReg === undefined) state.debtor.sameAsReg = true;
   if(state.bankName === undefined) state.bankName = '';
   if(state.bankAccount === undefined) state.bankAccount = '';
@@ -1797,7 +1546,7 @@ function load(){
   if(state.income.additionalExpenses !== undefined) delete state.income.additionalExpenses;
   if(!state.income.medianIncome) state.income.medianIncome = {1:'2564238',2:'4199292',3:'5359036',4:'6494738',5:'7108192',6:'8555952',7:'9515150'};
   if(!state.repaymentPlan) state.repaymentPlan = {
-    method: '36months', months: '36', hasExternalCommittee: false, committeeFeeRate: '',
+    method: '36months', months: '36', seizureFundMonths: '36', assetLiquidationMonths: '36', hasExternalCommittee: false, committeeFeeRate: '', committeePreApprovalFee: '',
     hasPriorityClaim: false,
     seizureFund: { enabled: false, amount: '', round: '1' },
     assetLiquidation: { enabled: false, amount: '', round: '' },
@@ -1807,7 +1556,8 @@ function load(){
   if(!state.repaymentPlan.assetLiquidation) state.repaymentPlan.assetLiquidation = { enabled: false, amount: '', round: '' };
   if(state.repaymentPlan.miscClause === undefined) state.repaymentPlan.miscClause = '';
   if(!state.statement) state.statement = {
-    pastCareers: [],
+    finalEducation: { date: '', status: '졸업' },
+    pastCareers: [], pastMarriageEvents: [],
     housing: { startDate:'', type:'own', leaseDeposit:'', leaseRent:'', leaseOverdue:'', leaseTenantName:'', relativeOwnerName:'', nonRelativeRelation:'', otherText:'' },
     hasLegalAction: false, legalActionRows: [],
     reasonChecks: { livingCost:false, medicalCost:false, education:false, leisure:false, businessFailure:false, guarantee:false, stockLoss:false, fraud:false },
@@ -1820,8 +1570,7 @@ function load(){
     }
   };
   if(!Array.isArray(state.statement.pastCareers)) state.statement.pastCareers = [];
-  if(state.statement.finalEducation !== undefined) delete state.statement.finalEducation;
-  if(state.statement.pastMarriageEvents !== undefined) delete state.statement.pastMarriageEvents;
+  if(!Array.isArray(state.statement.pastMarriageEvents)) state.statement.pastMarriageEvents = [];
   if(!Array.isArray(state.statement.legalActionRows)) state.statement.legalActionRows = [];
   if(!state.assets) state.assets = {
     cash:'', deposits:[], insurance:[],
@@ -1963,9 +1712,6 @@ function renderBasic(){
   document.getElementById('debtorName').value = state.debtor.name;
   document.getElementById('debtorRRN').value = state.debtor.rrn;
   document.getElementById('debtorPhone').value = state.debtor.phone;
-  document.getElementById('debtorEduSchool').value = state.debtor.finalEducation.school || '';
-  document.getElementById('debtorEduDate').value = fmtDateInputDisplay(state.debtor.finalEducation.date);
-  document.getElementById('debtorEduStatus').value = state.debtor.finalEducation.status;
   document.getElementById('debtorRegAddr').value = state.debtor.regAddress;
   document.getElementById('debtorCurrentAddr').value = state.debtor.sameAsReg ? state.debtor.regAddress : state.debtor.currentAddress;
   document.getElementById('debtorCurrentAddr').disabled = state.debtor.sameAsReg;
@@ -2240,7 +1986,7 @@ function renderExemptionTable(){
       <td><button class="del-row" data-id="${row.id}" title="삭제">✕</button></td>
     </tr>`;
   }).join('');
-  const exEl=document.getElementById('exemptionCount'); if(exEl) exEl.textContent=rows.length;
+  document.getElementById('exemptionCount').textContent = rows.length + '건';
 }
 
 function bindExemptionTable(){
@@ -2366,7 +2112,7 @@ function renderLeaseTable(){
       <td><button class="del-row" data-id="${row.id}" title="삭제">✕</button></td>
     </tr>`;
   }).join('');
-  const lcEl=document.getElementById('leaseCount'); if(lcEl) lcEl.textContent=rows.length;
+  document.getElementById('leaseCount').textContent = rows.length + '건';
 }
 
 function bindLeaseTable(){
@@ -2469,7 +2215,7 @@ function renderVehicleTable(){
       <td><button class="del-row" data-id="${row.id}" title="삭제">✕</button></td>
     </tr>`;
   }).join('');
-  const vcEl=document.getElementById('vehicleCount'); if(vcEl) vcEl.textContent=rows.length;
+  document.getElementById('vehicleCount').textContent = rows.length + '건';
 }
 
 function bindVehicleTable(){
@@ -2581,7 +2327,7 @@ function renderRealtyTable(){
       <td><button class="del-row" data-id="${row.id}" title="삭제">✕</button></td>
     </tr>`;
   }).join('');
-  const rcEl=document.getElementById('realtyCount'); if(rcEl) rcEl.textContent=rows.length;
+  document.getElementById('realtyCount').textContent = rows.length + '건';
 }
 
 function bindRealtyTable(){
@@ -2673,7 +2419,7 @@ function renderAssetTable(tbodyId, rows, columns, badgeId){
     }).join('');
     return `<tr><td class="rownum">${idx+1}</td>${cells}<td><button class="del-row" data-row="${tbodyId}" data-id="${row.id}" title="삭제">✕</button></td></tr>`;
   }).join('');
-  if(badgeId){ const bEl=document.getElementById(badgeId); if(bEl) bEl.textContent=rows.length; }
+  if(badgeId) document.getElementById(badgeId).textContent = rows.length + '건';
 }
 
 function renderAssets(){
@@ -2739,67 +2485,49 @@ function renderAssets(){
 
 function renderAssetSummary(){
   const a = state.assets;
-  const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
-  const setHtml = (id, val) => { const el = document.getElementById(id); if(el) el.innerHTML = val; };
-
   const depositSum = a.deposits.reduce((s,r) => s + (Number(r.balance)||0), 0);
   const depositNet = Math.max(0, depositSum - 2500000);
-  set('depositSumDisplay', moneyWon(depositSum));
-  set('depositNetDisplay', moneyWon(depositNet));
-  set('cube_depositSumDisplay', moneyWon(depositNet));
+  document.getElementById('depositSumDisplay').textContent = moneyWon(depositSum);
+  document.getElementById('depositNetDisplay').textContent = moneyWon(depositNet);
 
   const insuranceSum = a.insurance.reduce((s,r) => s + (Number(r.surrender)||0), 0);
   const insuranceNet = Math.max(0, insuranceSum - 2500000);
-  set('insuranceSumDisplay', moneyWon(insuranceSum));
-  set('insuranceNetDisplay', moneyWon(insuranceNet));
-  set('cube_insuranceSumDisplay', moneyWon(insuranceNet));
+  document.getElementById('insuranceSumDisplay').textContent = moneyWon(insuranceSum);
+  document.getElementById('insuranceNetDisplay').textContent = moneyWon(insuranceNet);
 
   const vehicleTotal = a.vehicles.reduce((s,r) => {
     const p1 = Number(r.price1)||0, p2 = Number(r.price2)||0;
     const avg = (p1 && p2) ? Math.round((p1+p2)/2) : (p1 || p2 || 0);
     return s + Math.max(0, avg - sumLinkedCreditorsCapped(r));
   }, 0);
-  set('cube_vehicleSumDisplay', moneyWon(vehicleTotal));
 
   const realtyTotal = a.realties.reduce((s,r) => s + Math.max(0, (Number(r.expected)||0) - sumLinkedCreditorsCapped(r)), 0);
-  set('cube_realtySumDisplay', moneyWon(realtyTotal));
-
   const leaseTotal = a.leases.reduce((s,r) => s + computeLeaseCounted(r), 0);
-  set('cube_leaseSumDisplay', moneyWon(leaseTotal));
-
   const equipTotal = a.equipment.reduce((s,r) => s + (Number(r.value)||0), 0);
-  set('cube_equipSumDisplay', moneyWon(equipTotal));
-
   const otherTotal = a.others.reduce((s,r) => s + (Number(r.value)||0), 0);
-  set('cube_otherSumDisplay', moneyWon(otherTotal));
 
-  const loanReceivableSum = a.loanReceivables.reduce((s,r) => s + (Number(r.amount)||0), 0);
-  set('cube_loanRecSumDisplay', moneyWon(loanReceivableSum));
-
-  const salesReceivableSum = a.salesReceivables.reduce((s,r) => s + (Number(r.amount)||0), 0);
-  set('cube_salesRecSumDisplay', moneyWon(salesReceivableSum));
-
+  const severanceNote = document.getElementById('severanceNote');
   let severanceNet = 0;
   if(a.severance.isPension){
     severanceNet = 0;
-    setHtml('severanceNote', '퇴직연금 가입자로 표시되어 재산가치·청산가치에 반영되지 않습니다.');
+    severanceNote.innerHTML = '퇴직연금 가입자로 표시되어 재산가치·청산가치에 반영되지 않습니다.';
   } else {
     severanceNet = Math.round((Number(a.severance.total)||0) / 2);
-    setHtml('severanceNote', `압류할 수 없는 퇴직금(1/2)은 제외되어, 재산 반영액은 총액의 절반입니다: <span id="severanceNetDisplay">${moneyWon(severanceNet)}</span>`);
+    severanceNote.innerHTML = `압류할 수 없는 퇴직금(1/2)은 제외되어, 재산 반영액은 총액의 절반입니다: <span id="severanceNetDisplay">${moneyWon(severanceNet)}</span>`;
   }
-  set('cube_severanceDisplay', moneyWon(severanceNet));
+
+  const loanReceivableSum = a.loanReceivables.reduce((s,r) => s + (Number(r.amount)||0), 0);
+  const salesReceivableSum = a.salesReceivables.reduce((s,r) => s + (Number(r.amount)||0), 0);
 
   const cash = Number(a.cash)||0;
-  set('cube_cashDisplay', moneyWon(cash));
 
   const total = cash + depositNet + insuranceNet + vehicleTotal + leaseTotal + realtyTotal + equipTotal + loanReceivableSum + salesReceivableSum + severanceNet + otherTotal;
   const exemption = getExemptionTotal();
   const liquidation = Math.max(0, total - exemption);
 
-  set('cube_exemptionSumDisplay', moneyWon(exemption));
-  set('assetTotalDisplay', moneyWon(total));
-  set('exemptionDisplay', moneyWon(exemption));
-  set('liquidationValueDisplay', moneyWon(liquidation));
+  document.getElementById('assetTotalDisplay').textContent = moneyWon(total);
+  document.getElementById('exemptionDisplay').textContent = moneyWon(exemption);
+  document.getElementById('liquidationValueDisplay').textContent = moneyWon(liquidation);
   if(typeof renderRepaymentSummary === 'function' && document.getElementById('repayTotalDebt')) renderRepaymentSummary();
 }
 
@@ -2850,6 +2578,7 @@ function newFamilyRow(){ return { id:'f_'+Math.random().toString(36).slice(2,9),
 function renderFamily(){
   const rows = state.family;
   const body = document.getElementById('familyBody');
+  if(!body) return;
   body.innerHTML = rows.map((row, idx) => `
     <tr data-row-id="${row.id}">
       <td class="rownum">
@@ -2865,7 +2594,8 @@ function renderFamily(){
       <td><input type="text" data-id="${row.id}" data-field="livingPeriod" value="${escapeHtml(row.livingPeriod)}" placeholder="예: 5년"></td>
       <td><button class="del-row" data-id="${row.id}" title="삭제">✕</button></td>
     </tr>`).join('');
-  const fcEl=document.getElementById('familyCount'); if(fcEl) fcEl.textContent=rows.length;
+  const fcEl = document.getElementById('familyCount');
+  if(fcEl) fcEl.textContent = rows.length + '건';
 }
 
 function newMarriageRow(){ return { id:'m_'+Math.random().toString(36).slice(2,9), type:'혼인', spouseName:'', date:'', note:'' }; }
@@ -2887,16 +2617,25 @@ function renderMarriageHistory(){
       <td><input type="text" data-id="${row.id}" data-field="note" value="${escapeHtml(row.note)}" placeholder="비고"></td>
       <td><button class="del-row" data-id="${row.id}" title="삭제">✕</button></td>
     </tr>`).join('');
-  const mcEl=document.getElementById('marriageCount'); if(mcEl) mcEl.textContent=rows.length;
+  const mcEl = document.getElementById('marriageCount');
+  if(mcEl) mcEl.textContent = rows.length + '건';
 }
 
 function bindMarriageHistory(){
-  // 혼인관계 모달 열기는 bindCubeModals의 cubeMarriage 클릭에서 처리함
+  const openBtn = document.getElementById('btnOpenMarriageModal');
+  if(openBtn) openBtn.addEventListener('click', () => {
+    document.getElementById('marriageModalOverlay').classList.add('open');
+  });
   const closeMarriageModal = () => document.getElementById('marriageModalOverlay').classList.remove('open');
   document.getElementById('marriageModalCloseBtn').addEventListener('click', closeMarriageModal);
   document.getElementById('marriageModalDoneBtn').addEventListener('click', closeMarriageModal);
   document.getElementById('marriageModalOverlay').addEventListener('click', e => {
     if(e.target.id === 'marriageModalOverlay') closeMarriageModal();
+  });
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape' && document.getElementById('marriageModalOverlay').classList.contains('open')){
+      closeMarriageModal();
+    }
   });
 
   document.getElementById('marriageBody').addEventListener('input', e => {
@@ -2982,8 +2721,7 @@ function renderHousing(){
       <td><button class="del-row" data-id="${row.id}" title="삭제">✕</button></td>
     </tr>`;
   }).join('');
-  const hcEl = document.getElementById('housingCount');
-  if(hcEl) hcEl.textContent = rows.length;
+  document.getElementById('housingCount').textContent = rows.length + '건';
 }
 
 function bindHousing(){
@@ -3172,18 +2910,15 @@ function printHousing(){
   <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 200); };<\/script>
 </body></html>`;
 
-  const printWin = window.open('', '_blank');
-  if(!printWin){
-    alert('팝업이 차단되었습니다. 브라우저의 팝업 차단을 해제해주세요.');
-    return;
-  }
-  printWin.document.open();
-  printWin.document.write(html);
-  printWin.document.close();
+  return openPrintWindow(html, false);
 }
 
 function bindFamily(){
-  document.getElementById('familyBody').addEventListener('input', e => {
+  const familyBody = document.getElementById('familyBody');
+  const btnAddFamily = document.getElementById('btnAddFamily');
+  if(!familyBody || !btnAddFamily) return;   // DOM에 없으면 바인딩 스킵
+
+  familyBody.addEventListener('input', e => {
     const t = e.target;
     const id = t.dataset.id, field = t.dataset.field;
     if(!id || !field) return;
@@ -3197,7 +2932,7 @@ function bindFamily(){
     }
     save();
   });
-  document.getElementById('familyBody').addEventListener('change', e => {
+  familyBody.addEventListener('change', e => {
     const t = e.target;
     const id = t.dataset.id, field = t.dataset.field;
     if(!id || field !== 'birthDate') return;
@@ -3212,7 +2947,7 @@ function bindFamily(){
     t.classList.remove('date-error');
     save();
   });
-  document.getElementById('familyBody').addEventListener('click', e => {
+  familyBody.addEventListener('click', e => {
     const btn = e.target.closest('.del-row');
     if(!btn) return;
     delete state.income.familyIncome[btn.dataset.id];
@@ -3222,7 +2957,7 @@ function bindFamily(){
     renderHouseholdSize();
     save();
   });
-  document.getElementById('btnAddFamily').addEventListener('click', () => {
+  btnAddFamily.addEventListener('click', () => {
     state.family.push(newFamilyRow());
     renderFamily();
     renderIncomeFamilyTable();
@@ -3235,6 +2970,7 @@ function bindFamily(){
 let familyDragState = null;
 function bindFamilyDragDrop(){
   const tbody = document.getElementById('familyBody');
+  if(!tbody) return;
 
   tbody.addEventListener('dragstart', e => {
     const handle = e.target.closest('.drag-handle');
@@ -3524,27 +3260,99 @@ function getLiquidationValueForPlan(){
   return Number((el.textContent||'').replace(/[^\d]/g,'')) || 0;
 }
 
-function renderRepaymentPlan(){
+function renderScenarioRecommend(){
+  const data  = computeRepaymentSchedule();
+  const liq   = getLiquidationValueForPlan();
+  const totalPrincipal = state.creditors.filter(c=>c.name).reduce((s,c)=>s+(Number(c.principal)||0),0);
+  const totalInterest  = state.creditors.filter(c=>c.name).reduce((s,c)=>s+(Number(c.interest)||0),0);
+  const monthly = data.monthlyAvailable;
+  const MAX = 60;
+
+  const months100p  = monthly > 0 ? Math.ceil(totalPrincipal / monthly) : Infinity;
+  const months100pi = monthly > 0 ? Math.ceil((totalPrincipal + totalInterest) / monthly) : Infinity;
+
+  // principalFirst: 원금 K개월 + 이자 추가
+  const Kpf = monthly>0&&totalPrincipal>0 ? Math.ceil(totalPrincipal/monthly) : Infinity;
+  const intAvail2pf = Math.max(0, monthly - (totalPrincipal - Math.max(0,Kpf-1)*monthly));
+  const intRemPf = Math.max(0, totalInterest - intAvail2pf);
+  const monthsPf = Kpf + (intRemPf>0&&monthly>0 ? Math.ceil(intRemPf/monthly) : 0);
+
+  const configs = [
+    { val:'36months',         months:36,        repay:monthly*36,                   rate:totalPrincipal>0?Math.min(100,monthly*36/totalPrincipal*100):0 },
+    { val:'principal100',     months:months100p,  repay:totalPrincipal,               rate:100 },
+    { val:'principalInterest100', months:months100pi, repay:totalPrincipal+totalInterest, rate:100 },
+    { val:'principalFirst',   months:monthsPf,  repay:totalPrincipal+totalInterest, rate:100 },
+  ];
+
   const rp = state.repaymentPlan;
-  document.querySelectorAll('#repayMethodToggle button').forEach(b => b.classList.toggle('active', b.dataset.val === rp.method));
+
+  // 현재 선택된 카드 판단
+  const activeVal = rp.method;
+
+  configs.forEach(sc => {
+    const card   = document.getElementById('methodCard_' + sc.val);
+    const subEl  = document.getElementById('methodSub_' + sc.val);
+    const statEl = document.getElementById('methodStatus_' + sc.val);
+    if(!card) return;
+
+    const impossible = sc.months > MAX;
+    const meets      = !impossible && sc.repay >= liq;
+
+    // 카드 상태
+    card.className = 'method-card' +
+      (sc.val === activeVal ? ' active' : '') +
+      (impossible ? ' disabled' : meets ? ' ok' : ' ng');
+
+    // 부제 (개월수/변제율)
+    if(sc.val === '36months'){
+      subEl.textContent = '변제율 ' + sc.rate.toFixed(1) + '%  ·  총 ' + moneyWon(monthly*36);
+    } else {
+      subEl.textContent = impossible
+        ? (sc.months === Infinity ? '가용소득 없음' : sc.months + '개월 필요 (60개월 초과)')
+        : sc.months + '개월  ·  총 ' + moneyWon(sc.repay);
+    }
+
+    // 청산가치 충족 여부
+    if(impossible){
+      statEl.textContent = '⚠ 60개월 초과 — 불가';
+      statEl.style.color = '#c0392b';
+    } else if(meets){
+      statEl.textContent = '✓ 청산가치 충족';
+      statEl.style.color = '#1a7a1a';
+    } else {
+      statEl.textContent = '✗ 청산가치 미충족';
+      statEl.style.color = '#c0392b';
+    }
+  });
+}
+
+
+function renderRepaymentPlan(){
+  renderScenarioRecommend();
+  const rp = state.repaymentPlan;
+  // 변제기간: 기본형만 표시
   document.getElementById('repayMonthsField').style.display = rp.method === '36months' ? 'block' : 'none';
-  document.getElementById('repayMonths').value = rp.months;
+  document.getElementById('repayMonths').value = rp.months || '36';
 
-  document.getElementById('hasExternalCommittee').checked = rp.hasExternalCommittee;
-  document.getElementById('committeeFeeField').style.display = rp.hasExternalCommittee ? 'block' : 'none';
-  document.getElementById('committeeFeeRate').value = rp.committeeFeeRate;
-
-  document.querySelectorAll('#priorityClaimToggle button').forEach(b => b.classList.toggle('active', b.dataset.val === String(rp.hasPriorityClaim)));
-
+  // 추가 옵션 상태 복원
   document.getElementById('seizureFundEnabled').checked = rp.seizureFund.enabled;
-  document.getElementById('seizureFundFields').style.display = rp.seizureFund.enabled ? 'grid' : 'none';
+  document.getElementById('seizureFundInputs').style.display = rp.seizureFund.enabled ? 'block' : 'none';
   document.getElementById('seizureFundAmount').value = moneyInputDisplay(rp.seizureFund.amount);
   document.getElementById('seizureFundRound').value = rp.seizureFund.round;
-
   document.getElementById('assetLiquidationEnabled').checked = rp.assetLiquidation.enabled;
-  document.getElementById('assetLiquidationFields').style.display = rp.assetLiquidation.enabled ? 'grid' : 'none';
+  document.getElementById('assetLiquidationInputs').style.display = rp.assetLiquidation.enabled ? 'block' : 'none';
   document.getElementById('assetLiquidationAmount').value = moneyInputDisplay(rp.assetLiquidation.amount);
-  document.getElementById('assetLiquidationRound').value = rp.assetLiquidation.round;
+  document.getElementById('assetLiquidationRound').value = rp.assetLiquidation.round || '12';
+  document.querySelectorAll('#assetLiquidationRoundToggle button').forEach(b =>
+    b.classList.toggle('active', b.dataset.val === String(rp.assetLiquidation.round || '12')));
+
+  // 외부회생위원
+  document.getElementById('hasExternalCommittee').checked = rp.hasExternalCommittee;
+  document.getElementById('committeeFeeField').style.display = rp.hasExternalCommittee ? 'block' : 'none';
+  document.getElementById('committeePreApprovalField').style.display = rp.hasExternalCommittee ? 'block' : 'none';
+  document.getElementById('committeeFeeRate').value = rp.committeeFeeRate;
+  document.getElementById('committeePreApprovalFee').value = moneyInputDisplay(rp.committeePreApprovalFee);
+
   document.getElementById('miscClauseText').value = rp.miscClause;
 
   renderRepaymentSummary();
@@ -3556,7 +3364,7 @@ function renderRepaymentSummary(){
   const monthlyIncomeText = document.getElementById('sumAvailableIncome') ? document.getElementById('sumAvailableIncome').textContent : '0원';
   const availableIncome = Number((monthlyIncomeText||'').replace(/[^\d]/g,'')) || 0;
   const liquidation = getLiquidationValueForPlan();
-  const months = rp.method === '36months' ? (Number(rp.months)||36) : (Number(rp.months)||36);
+  const months = getRepayMonths();
 
   const specialFundTotal = (rp.seizureFund.enabled ? (Number(rp.seizureFund.amount)||0) : 0)
     + (rp.assetLiquidation.enabled ? (Number(rp.assetLiquidation.amount)||0) : 0);
@@ -3591,16 +3399,22 @@ function bindRepaymentPlan(){
   });
 
   document.getElementById('repayMethodToggle').addEventListener('click', e => {
-    const btn = e.target.closest('button');
-    if(!btn) return;
-    state.repaymentPlan.method = btn.dataset.val;
+    const card = e.target.closest('.method-card[data-val]');
+    if(!card || card.classList.contains('disabled')) return;
+    state.repaymentPlan.method = card.dataset.val;
     renderRepaymentPlan();
     save();
   });
 
   document.getElementById('repayMonths').addEventListener('input', e => {
-    state.repaymentPlan.months = e.target.value.replace(/[^\d]/g,'');
-    e.target.value = state.repaymentPlan.months;
+    const rp2 = state.repaymentPlan;
+    let val = Number(e.target.value.replace(/[^\d]/g,'')) || 0;
+    if(val > 60) val = 60;
+    const strVal = String(val || '');
+    if(rp2.seizureFund.enabled)           rp2.seizureFundMonths = strVal;
+    else if(rp2.assetLiquidation.enabled) rp2.assetLiquidationMonths = strVal;
+    else                                  rp2.months = strVal;
+    e.target.value = strVal;
     renderRepaymentSummary();
     save();
   });
@@ -3615,8 +3429,12 @@ function bindRepaymentPlan(){
     e.target.value = state.repaymentPlan.committeeFeeRate;
     save();
   });
+  document.getElementById('committeePreApprovalFee').addEventListener('input', e => {
+    state.repaymentPlan.committeePreApprovalFee = liveFormatMoney(e.target);
+    save();
+  });
 
-  document.getElementById('priorityClaimToggle').addEventListener('click', e => {
+  if(document.getElementById('priorityClaimToggle')) document.getElementById('priorityClaimToggle').addEventListener('click', e => {
     const btn = e.target.closest('button');
     if(!btn) return;
     state.repaymentPlan.hasPriorityClaim = btn.dataset.val === 'true';
@@ -3624,10 +3442,16 @@ function bindRepaymentPlan(){
     save();
   });
 
+  // 추가 옵션 체크박스
   document.getElementById('seizureFundEnabled').addEventListener('change', e => {
     state.repaymentPlan.seizureFund.enabled = e.target.checked;
-    renderRepaymentPlan();
-    save();
+    document.getElementById('seizureFundInputs').style.display = e.target.checked ? 'block' : 'none';
+    renderRepaymentSummary(); save();
+  });
+  document.getElementById('assetLiquidationEnabled').addEventListener('change', e => {
+    state.repaymentPlan.assetLiquidation.enabled = e.target.checked;
+    document.getElementById('assetLiquidationInputs').style.display = e.target.checked ? 'block' : 'none';
+    renderRepaymentSummary(); save();
   });
   document.getElementById('seizureFundAmount').addEventListener('input', e => {
     state.repaymentPlan.seizureFund.amount = liveFormatMoney(e.target);
@@ -3640,11 +3464,6 @@ function bindRepaymentPlan(){
     save();
   });
 
-  document.getElementById('assetLiquidationEnabled').addEventListener('change', e => {
-    state.repaymentPlan.assetLiquidation.enabled = e.target.checked;
-    renderRepaymentPlan();
-    save();
-  });
   document.getElementById('assetLiquidationAmount').addEventListener('input', e => {
     state.repaymentPlan.assetLiquidation.amount = liveFormatMoney(e.target);
     renderRepaymentSummary();
@@ -3654,21 +3473,92 @@ function bindRepaymentPlan(){
     state.repaymentPlan.assetLiquidation.round = e.target.value;
     save();
   });
+  document.getElementById('assetLiquidationRoundToggle').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-val]');
+    if(!btn) return;
+    document.querySelectorAll('#assetLiquidationRoundToggle button').forEach(b => b.classList.toggle('active', b === btn));
+    document.getElementById('assetLiquidationRound').value = btn.dataset.val;
+    state.repaymentPlan.assetLiquidation.round = btn.dataset.val;
+    save();
+  });
 
   document.getElementById('miscClauseText').addEventListener('input', e => {
     state.repaymentPlan.miscClause = e.target.value;
     save();
   });
 
-  document.getElementById('btnPrintRepaymentSchedule').addEventListener('click', printRepaymentSchedule);
-  document.getElementById('btnPrintRepaymentPlan').addEventListener('click', printRepaymentPlan);
+  document.getElementById('btnPrintRepaymentSchedule').addEventListener('click', () => {
+    const hasPriority = state.creditors.some(c => c.claimType === '우선' && c.name);
+    const is100 = ['principal100','principalInterest100'].includes(state.repaymentPlan.method);
+    if(hasPriority && is100) printRepaymentSchedulePriority100();
+    else if(hasPriority)     printRepaymentSchedulePriority();
+    else if(is100)           printRepaymentSchedule100();
+    else                     printRepaymentSchedule();
+  });
+  document.getElementById('btnPrintRepaymentPlan').addEventListener('click', () => printRepaymentPlan());
+  document.getElementById('btnPrintBoth').addEventListener('click', () => {
+    const hasPriority = state.creditors.some(c => c.claimType === '우선' && c.name);
+    const is100 = ['principal100','principalInterest100'].includes(state.repaymentPlan.method);
+
+    let planHtml, schedHtml;
+    try { planHtml = printRepaymentPlan(true); } catch(e){ alert('변제계획안 오류: ' + e.message); return; }
+    try {
+      schedHtml = hasPriority && is100  ? printRepaymentSchedulePriority100(true)
+                : hasPriority           ? printRepaymentSchedulePriority(true)
+                : is100                 ? printRepaymentSchedule100(true)
+                :                         printRepaymentSchedule(true);
+    } catch(e){ alert('변제예정액표 오류: ' + e.message); return; }
+
+    if(!planHtml || !schedHtml){ alert('출력 데이터 생성 오류 — planHtml:' + !!planHtml + ' schedHtml:' + !!schedHtml); return; }
+
+    // 변제예정액표 body 및 CSS 추출
+    const getBody = html => {
+      const start = html.indexOf('<body>');
+      const end   = html.lastIndexOf('<script>window.onload');
+      if(start < 0 || end < 0) return '';
+      return html.slice(start + 6, end);
+    };
+    const getCss = html => {
+      const s = html.indexOf('<style>'), e = html.lastIndexOf('</style>');
+      return s >= 0 && e > s ? html.slice(s + 7, e) : '';
+    };
+
+    // slice로 삽입 (replace의 $ 특수문자 문제 회피)
+    const schedInsert = `<style>${getCss(schedHtml)}</style>
+<div style="page-break-before:always;margin:0;padding:0;">${getBody(schedHtml)}</div>`;
+
+    const insertAt = planHtml.lastIndexOf('</body>');
+    const combined = insertAt >= 0
+      ? planHtml.slice(0, insertAt) + schedInsert + planHtml.slice(insertAt)
+      : planHtml + schedInsert;
+
+    const w = window.open('', '_blank');
+    if(!w){ alert('팝업이 차단되었습니다.'); return; }
+    w.document.open();
+    w.document.write(combined);
+    w.document.close();
+  });
+}
+
+function openPrintWindow(html, returnOnly){
+  if(returnOnly) return html;
+  const w = window.open('', '_blank');
+  if(!w){ alert('팝업이 차단되었습니다. 브라우저의 팝업 차단을 해제해주세요.'); return null; }
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  return null;
+}
+
+function getRepayMonths(){
+  return Number(state.repaymentPlan.months) || 36;
 }
 
 function computeRepaymentSchedule(){
   const rp = state.repaymentPlan;
   const availableIncomeText = document.getElementById('sumAvailableIncome') ? document.getElementById('sumAvailableIncome').textContent : '0원';
   const monthlyAvailable = Number((availableIncomeText||'').replace(/[^\d]/g,'')) || 0;
-  const months = Number(rp.months) || 36;
+  const months = getRepayMonths();
 
   const rows = state.creditors.filter(c => c.name).map(c => {
     const isFuture = c.natureType === '장래구상채권';
@@ -3694,11 +3584,11 @@ function computeRepaymentSchedule(){
   return { rows, totalDebt, totalMonthly, totalRepay, repayRate, monthlyAvailable, months };
 }
 
-function printRepaymentPlan(){
+function printRepaymentPlan(returnOnly=false){
   const rp = state.repaymentPlan;
   const data = computeRepaymentSchedule();
   const liquidation = getLiquidationValueForPlan();
-  const methodLabel = {'36months':'기본 36개월형', 'principal100':'원금 100% 변제형', 'principalInterest100':'원리금 100% 변제형'}[rp.method] || '기본 36개월형';
+  const methodLabel = {'36months':'기본형', 'principal100':'원금 100% 변제형', 'principalInterest100':'원리금 100% 변제형'}[rp.method] || '기본형';
 
   const specialFundHtml = [];
   if(rp.seizureFund.enabled){
@@ -3720,72 +3610,473 @@ function printRepaymentPlan(){
   th,td{border:1px solid #333;padding:6px 9px;}
   th{background:#f2f2f2;text-align:center;}
   ul{margin:6px 0;padding-left:20px;}
-  @media print{ body{padding:12px;} }
+  @media print{
+    body{padding:12px;}
+    h2{margin:10px 0 4px; page-break-after:avoid;}
+    .indent{margin:0 0 4px 16px;}
+    h2 + div, h2 + table{page-break-before:avoid;}
+  }
 </style></head><body>
-  <h1>변 제 계 획 안</h1>
-  <div class="meta">사건번호: ${escapeHtml(state.caseNumber || '-')} &nbsp;|&nbsp; 채무자: ${escapeHtml(state.debtor.name || '-')} &nbsp;|&nbsp; 변제방식: ${methodLabel}</div>
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;font-size:9pt;">
+    <span>사건번호 &nbsp;<b>${escapeHtml(state.caseNumber) || ''}</b></span>
+    <span style="font-size:10pt;">채 &nbsp;무 &nbsp;자 &nbsp; ${escapeHtml(state.debtor.name || '')}</span>
+    <span style="visibility:hidden;">사건번호</span>
+  </div>
+  <h1 style="margin-bottom:2px;">변제계획(안)</h1>
+  <div style="text-align:right;font-size:10.5pt;margin-top:2px;margin-bottom:16px;">
+    ${state.draftDate ? fmtDateKorean(state.draftDate) + ' 작성' : ''}
+  </div>
 
   <h2>1. 변제기간</h2>
-  <div class="indent">${escapeHtml(state.repayStartDate ? fmtDateDot(state.repayStartDate) : '(변제시작일 미입력)')}부터 ${data.months}개월간</div>
+  <div class="indent" style="font-size:11pt;letter-spacing:0.5px;padding:4px 0;">${(() => {
+    if(!state.repayStartDate) return '(변제시작일 미입력)';
+    const start = new Date(state.repayStartDate);
+    const end = new Date(state.repayStartDate);
+    end.setMonth(end.getMonth() + Number(data.months));
+    end.setDate(end.getDate() - 1);
+    const fmt = d => d.getFullYear() + '년 ' + (d.getMonth()+1) + '월 ' + d.getDate() + '일';
+    return fmt(start) + ' &nbsp;부터 &nbsp;' + fmt(end) + ' &nbsp;까지 &nbsp;&nbsp;' + data.months + '개월간';
+  })()}</div>
 
   <h2>2. 변제에 제공되는 소득 또는 재산</h2>
   <div class="indent">
-    가. 월평균 가용소득: ${data.monthlyAvailable.toLocaleString('ko-KR')}원<br>
-    나. 변제횟수: ${data.months}회<br>
-    다. 총 가용소득: ${(data.monthlyAvailable*data.months).toLocaleString('ko-KR')}원
-    ${rp.hasExternalCommittee ? `<br>라. 외부회생위원 선임 (보수율 ${escapeHtml(rp.committeeFeeRate)||'0'}%)` : ''}
+    <div style="margin:0 0 6px 0;">가. 소득</div>
+    <div style="margin:3px 0 5px 16px;">(1) 수입</div>
+    ${(() => {
+      const sources = state.income.sources;
+      const employed = sources.filter(s => s.type === 'employed');
+      const self = sources.filter(s => s.type === 'selfEmployed');
+      let rows = [];
+      if(employed.length > 0){
+        employed.forEach(s => {
+          rows.push('<div style="margin:3px 0 3px 32px;">■ 변제기간 동안 ' + escapeHtml(s.name||'(직장명 미입력)') + '에서 받는 월평균 급여 ' + (Number(s.monthlyAmount)||0).toLocaleString('ko-KR') + ' 원</div>');
+        });
+      } else {
+        rows.push('<div style="margin:3px 0 3px 32px;">□ 변제기간 동안 (직장)에서 받는 월평균 급여 - 원</div>');
+      }
+      if(self.length > 0){
+        self.forEach(s => {
+          rows.push('<div style="margin:3px 0 3px 32px;">■ 변제기간 동안 ' + escapeHtml(s.name||'(상호 미입력)') + '를 운영하여 얻은 평균 소득 ' + (Number(s.monthlyAmount)||0).toLocaleString('ko-KR') + ' 원</div>');
+        });
+      } else {
+        rows.push('<div style="margin:3px 0 3px 32px;">□ 변제기간 동안 (사업자)를 운영하여 얻은 평균 소득 - 원</div>');
+      }
+      return rows.join('');
+    })()}
+    ${(() => {
+      // 가구원수·중위소득·생계비 계산
+      const hh = getHouseholdSize();
+      const medInfo = getMedianIncomeInfo();
+      const monthlyTotal = getIncomeMonthlyTotal();
+      const repayAmt = Number(state.income.expectedRepayment) || 0;
+      const livingExpense = Math.max(0, monthlyTotal - repayAmt);
+      const available = repayAmt;
+      const months = Number(data.months) || 0;
+
+      // 변제종료일 계산
+      let periodText = '';
+      if(state.repayStartDate){
+        const start = new Date(state.repayStartDate);
+        const end = new Date(state.repayStartDate);
+        end.setMonth(end.getMonth() + months);
+        end.setDate(end.getDate() - 1);
+        const fmt = d => d.getFullYear() + '년 ' + (d.getMonth()+1) + '월 ' + d.getDate() + '일';
+        periodText = fmt(start) + '부터 ' + fmt(end) + '까지';
+      } else {
+        periodText = '(변제시작일 미입력)';
+      }
+
+      return `
+    <div style="margin:7px 0 5px 16px;">(2) 채무자 및 피부양자의 생활에 필요한 생계비</div>
+    <div style="margin:3px 0 3px 32px;">(가) 채무자 및 피부양자: 총 ${hh}명</div>
+    <div style="margin:3px 0 3px 32px;">(나) 국민기초생활보장법에 의한 최저생계비: 월 ${medInfo.median.toLocaleString('ko-KR')}원</div>
+    <div style="margin:2px 0 8px 32px;">(다) 채무자회생 및 파산에 관한 법률에 따라 조정된 생계비: 월 ${livingExpense.toLocaleString('ko-KR')}원</div>
+    <div style="margin:7px 0 5px 16px;">(3) 채무자의 가용소득</div>
+    <div style="margin:3px 0 7px 32px;">기간: ${periodText}</div>
+    ${rp.hasExternalCommittee ? '' : `<table style="width:100%;border-collapse:collapse;font-size:10.5pt;margin-top:4px;">
+      <colgroup><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup>
+      <thead>
+        <tr>
+          <th style="border:1px solid #000;padding:5px 6px;text-align:center;background:#f2f2f2;">①월 평균 수입</th>
+          <th style="border:1px solid #000;padding:5px 6px;text-align:center;background:#f2f2f2;">②월 평균 생계비</th>
+          <th style="border:1px solid #000;padding:5px 6px;text-align:center;background:#f2f2f2;">③월 평균 가용소득<br>(①-②)</th>
+          <th style="border:1px solid #000;padding:5px 6px;text-align:center;background:#f2f2f2;">④변제 횟수<br>(월 단위로 환산)</th>
+          <th style="border:1px solid #000;padding:5px 6px;text-align:center;background:#f2f2f2;">⑤총 가용소득<br>(③×④)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${monthlyTotal.toLocaleString('ko-KR')}원</td>
+          <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${livingExpense.toLocaleString('ko-KR')}원</td>
+          <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${available.toLocaleString('ko-KR')}원</td>
+          <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${months}회</td>
+          <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${(available*months).toLocaleString('ko-KR')}원</td>
+        </tr>
+      </tbody>
+    </table>`}
+    ${!rp.hasExternalCommittee ? '' : (() => {
+      const feeRate = Number(rp.committeeFeeRate) || 0;
+      const monthlyFee = Math.round(available * feeRate / 100);
+      const actualAvail = Math.max(0, available - monthlyFee);
+      return `<table style="width:100%;border-collapse:collapse;font-size:10.5pt;margin-top:4px;">
+      <colgroup><col style="width:14.28%"><col style="width:14.28%"><col style="width:14.28%"><col style="width:14.28%"><col style="width:14.28%"><col style="width:14.28%"><col style="width:14.32%"></colgroup>
+      <thead>
+        <tr>
+          <th style="border:1px solid #000;padding:5px 4px;text-align:center;background:#f2f2f2;font-size:9.5pt;">①월 평균 수입</th>
+          <th style="border:1px solid #000;padding:5px 4px;text-align:center;background:#f2f2f2;font-size:9.5pt;">②월 평균 생계비</th>
+          <th style="border:1px solid #000;padding:5px 4px;text-align:center;background:#f2f2f2;font-size:9.5pt;">③월 평균 가용소득<br>(①-②)</th>
+          <th style="border:1px solid #000;padding:5px 4px;text-align:center;background:#f2f2f2;font-size:9.5pt;">④월 회생위원 보수</th>
+          <th style="border:1px solid #000;padding:5px 4px;text-align:center;background:#f2f2f2;font-size:9.5pt;">⑤월 실제 가용소득<br>(③-④)</th>
+          <th style="border:1px solid #000;padding:5px 4px;text-align:center;background:#f2f2f2;font-size:9.5pt;">⑥변제 횟수<br>(월 단위로 환산)</th>
+          <th style="border:1px solid #000;padding:5px 4px;text-align:center;background:#f2f2f2;font-size:9.5pt;">⑦총 실제 가용소득<br>(⑤×⑥)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="border:1px solid #000;padding:5px 4px;text-align:center;font-size:9.5pt;">${monthlyTotal.toLocaleString('ko-KR')}원</td>
+          <td style="border:1px solid #000;padding:5px 4px;text-align:center;font-size:9.5pt;">${livingExpense.toLocaleString('ko-KR')}원</td>
+          <td style="border:1px solid #000;padding:5px 4px;text-align:center;font-size:9.5pt;">${available.toLocaleString('ko-KR')}원</td>
+          <td style="border:1px solid #000;padding:5px 4px;text-align:center;font-size:9.5pt;">${monthlyFee.toLocaleString('ko-KR')}원</td>
+          <td style="border:1px solid #000;padding:5px 4px;text-align:center;font-size:9.5pt;">${actualAvail.toLocaleString('ko-KR')}원</td>
+          <td style="border:1px solid #000;padding:5px 4px;text-align:center;font-size:9.5pt;">${months}회</td>
+          <td style="border:1px solid #000;padding:5px 4px;text-align:center;font-size:9.5pt;">${(actualAvail*months).toLocaleString('ko-KR')}원</td>
+        </tr>
+      </tbody>
+    </table>`;
+    })()}`;
+    })()}
+    ${(() => {
+      const hasSpecial = rp.seizureFund.enabled || rp.assetLiquidation.enabled;
+      return '<div style="margin:10px 0 7px 0;">나. 재산: [ 해당 있음 ' + (hasSpecial ? '■' : '□') + ' &nbsp;/&nbsp; 해당 없음 ' + (hasSpecial ? '□' : '■') + ' ]</div>';
+    })()}
   </div>
 
-  <h2>3. 특수재원 투입 ${specialFundHtml.length ? '' : '<span style="font-weight:400;">해당없음</span>'}</h2>
-  ${specialFundHtml.length ? `<ul>${specialFundHtml.join('')}</ul>` : ''}
+  <h2>3. 개인회생재단채권에 대한 변제 ${(() => {
+    const hasGa = rp.hasExternalCommittee;
+    const hasAny = hasGa;  // 나. 는 현재 해당없음
+    return hasAny ? '[ 해당 있음 <b>■</b> / 해당 없음 □ ]' : '[ 해당 있음 □ / 해당 없음 <b>■</b> ]';
+  })()}</h2>
+  <div class="indent">
+    <div style="margin:0 0 5px 0;">가. 회생위원의 보수 및 비용 ${rp.hasExternalCommittee ? '[ 해당 있음 <b>■</b> / 해당 없음 □ ]' : '[ 해당 있음 □ / 해당 없음 <b>■</b> ]'}</div>
+    ${rp.hasExternalCommittee ? `
+    <div style="margin:3px 0 3px 32px;">${rp.committeePreApprovalFee ? '■' : '□'} 인가결정 이전 업무에 대한 보수로 변제계획 인가 후 ${rp.committeePreApprovalFee ? (Number(String(rp.committeePreApprovalFee).replace(/[^\d]/g,''))||0).toLocaleString('ko-KR') : '(미입력)'}원을 지급</div>
+    <div style="margin:3px 0 7px 32px;">■ 인가결정 이후 업무에 대한 보수로 변제계획 인가 후 채무자가 인가된 변제계획에 따라 임치한 금원의 ${escapeHtml(rp.committeeFeeRate)||'0'}%를 지급</div>` : `
+    <div style="margin:3px 0 3px 32px;">□ 인가결정 이전 업무에 대한 보수로 변제계획 인가 후 (  )원을 지급</div>
+    <div style="margin:3px 0 7px 32px;">□ 인가결정 이후 업무에 대한 보수로 변제계획 인가 후 채무자가 인가된 변제계획에 따라 임치한 금원의 (   )%를 지급</div>`}
+    <div style="margin:10px 0 5px 0;">나. 기타 개인회생재단채권 [ 해당 있음 □ / 해당 없음 <b>■</b> ]</div>
+    <div style="margin:3px 0 5px 16px;">(1) 채권의 내용</div>
+    <table style="width:100%;border-collapse:collapse;font-size:10.5pt;margin:4px 0 0 16px;width:calc(100% - 16px);">
+      <thead>
+        <tr>
+          <th style="border:1px solid #000;padding:5px 6px;text-align:center;background:#f2f2f2;width:25%;">채권자</th>
+          <th style="border:1px solid #000;padding:5px 6px;text-align:center;background:#f2f2f2;width:25%;">채권현재액</th>
+          <th style="border:1px solid #000;padding:5px 6px;text-align:center;background:#f2f2f2;width:25%;">채권발생원인</th>
+          <th style="border:1px solid #000;padding:5px 6px;text-align:center;background:#f2f2f2;width:25%;">변제기</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="border:1px solid #000;padding:3px 6px;">&nbsp;</td><td style="border:1px solid #000;padding:3px 6px;">&nbsp;</td><td style="border:1px solid #000;padding:3px 6px;">&nbsp;</td><td style="border:1px solid #000;padding:3px 6px;">&nbsp;</td></tr>
+        <tr><td style="border:1px solid #000;padding:3px 6px;">&nbsp;</td><td style="border:1px solid #000;padding:3px 6px;">&nbsp;</td><td style="border:1px solid #000;padding:3px 6px;">&nbsp;</td><td style="border:1px solid #000;padding:3px 6px;">&nbsp;</td></tr>
+        <tr><td style="border:1px solid #000;padding:3px 6px;">&nbsp;</td><td style="border:1px solid #000;padding:3px 6px;">&nbsp;</td><td style="border:1px solid #000;padding:3px 6px;">&nbsp;</td><td style="border:1px solid #000;padding:3px 6px;">&nbsp;</td></tr>
+      </tbody>
+    </table>
+    <div style="margin:10px 0 5px 16px;">(2) 변제방법</div>
+    <div style="margin:3px 0 5px 32px;">변제계획 인가일 직후 원리금 전액을 일반 개인회생채권보다 우선하여 변제한다.</div>
+  </div>
 
-  <h2>4. 우선채권 여부</h2>
-  <div class="indent">${rp.hasPriorityClaim ? '우선변제권이 있는 채권(세금 등)이 포함되어 있습니다.' : '우선변제권이 있는 채권은 없습니다.'}</div>
+  ${(() => {
+    const TH = 'border:1px solid #000;padding:5px 6px;text-align:center;background:#f2f2f2;';
+    const TD = 'border:1px solid #000;padding:5px 6px;text-align:center;';
+    const priorityCreds = state.creditors.filter(c => c.claimType === '우선' && c.name);
+    const hasAny = priorityCreds.length > 0;
 
-  <h2>5. 채권자별 변제예정액</h2>
-  <table>
-    <thead><tr><th style="width:36px;">번호</th><th>채권자</th><th>채권액</th><th>월 변제액</th><th>총 변제액</th></tr></thead>
+    // 우선채권 표 (6줄 데이터 행 - 입력된 것 + 빈 행으로 최대 6줄 채움)
+    // 변제예정액 데이터에서 우선채권 회차 계산
+    const scheduleRows = data.rows;
+    const totalDebt = scheduleRows.reduce((s,r) => s + r.amount, 0);
+    const monthlyAvail = data.monthlyAvailable;
+    const totalMonths = Number(data.months) || 36;
+
+    // 우선채권 누적 변제기 계산 (우선채권은 앞에서부터 순서대로 변제)
+    let accumulatedPaid = 0; // 이전 우선채권들이 소진한 월수
+    const dataRows = priorityCreds.map(cr => {
+      const amt = (Number(cr.principal)||0) + (Number(cr.interest)||0);
+      const category = escapeHtml(cr.category || cr.natureType || '');
+
+      // 이 채권의 월 변제액 (전체 대비 비율)
+      const schedRow = scheduleRows.find(r => r.id === cr.id);
+      const monthly = schedRow ? schedRow.monthly : (totalDebt > 0 ? Math.ceil((amt / totalDebt) * monthlyAvail / 10) * 10 : 0);
+      const monthsNeeded = (monthly > 0) ? Math.ceil(amt / monthly) : totalMonths;
+      const startRound = accumulatedPaid + 1;
+      const endRound = Math.min(accumulatedPaid + monthsNeeded, totalMonths);
+      accumulatedPaid = endRound;
+
+      const periodText = amt > 0 ? `${startRound}회 ~ ${endRound}회` : '-';
+
+      return `<tr>
+        <td style="${TD}">${escapeHtml(cr.name)}</td>
+        <td style="${TD}">${amt ? amt.toLocaleString('ko-KR') + '원' : ''}</td>
+        <td style="${TD}">${category}</td>
+        <td style="${TD}">${periodText}</td>
+      </tr>`;
+    });
+    const emptyRows = Math.max(0, 6 - dataRows.length);
+    const blankRows = Array(emptyRows).fill(`<tr>
+        <td style="${TD}">&nbsp;</td>
+        <td style="${TD}">&nbsp;</td>
+        <td style="${TD}">&nbsp;</td>
+        <td style="${TD}">&nbsp;</td>
+      </tr>`).join('');
+
+    return `<h2>4. 일반의 우선권 있는 개인회생채권에 대한 변제 [ 해당 있음 ${hasAny ? '<b>■</b>' : '□'} / 해당 없음 ${hasAny ? '□' : '<b>■</b>'} ]</h2>
+  <div class="indent">
+    <div style="margin:0 0 5px 16px;">(1) 채권의 내용</div>
+    <table style="width:100%;border-collapse:collapse;font-size:10.5pt;margin:4px 0 0 0;">
+      <thead>
+        <tr>
+          <th style="${TH}width:25%;">채권자</th>
+          <th style="${TH}width:25%;">채권현재액</th>
+          <th style="${TH}width:30%;">채권발생원인(우선권의 근거)</th>
+          <th style="${TH}width:20%;">변제기</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${dataRows.join('')}
+        ${blankRows}
+      </tbody>
+    </table>
+    <div style="margin:10px 0 5px 16px;">(2) 변제방법</div>
+    <div style="margin:3px 0 3px 32px;">변제계획 인가일 직후 최초 도래하는 변제기일에 원리금 전액을 우선하여 변제한다.</div>
+    <div style="margin:3px 0 7px 32px;">남은 채권이 있을 경우에는 일반 개인회생채권의 매 변제기일에 우선하여 변제한다.</div>
+  </div>`;
+  })()}
+
+  ${(() => {
+    const TH = 'border:1px solid #000;padding:3px 6px;text-align:center;background:#f2f2f2;font-size:10pt;';
+    const TD = 'border:1px solid #000;padding:3px 6px;text-align:center;font-size:10pt;';
+    const TDR = 'border:1px solid #000;padding:3px 6px;text-align:right;font-size:10pt;';
+
+    // 부속서류 있는 채권자 (별제권부)
+    const securedCreds = state.creditors.filter(c => c.hasAttachment && c.name);
+    const hasAny = securedCreds.length > 0;
+
+    // 데이터 행 생성 (채권자 1명당 3줄)
+    const dataRows = securedCreds.map((cr, idx) => {
+      const principal = Number(cr.principal) || 0;
+      const interest  = Number(cr.interest)  || 0;
+      const total     = principal + interest;
+      const att       = cr.attachmentType1 || {};
+      const colAmt    = Number(att.amount) || 0;  // 담보가액 = ③ 변제예상액
+      const uncovered = Math.max(0, total - colAmt); // ④ 변제불가액
+      const colDesc   = [att.kind, att.mortgageKind, att.targetInfo].filter(Boolean).join(' / ');
+
+      return `
+      <!-- creditor ${idx+1} row1 -->
+      <tr>
+        <td style="${TD}" rowspan="3">${idx+1}</td>
+        <td style="${TD}" rowspan="3">${escapeHtml(cr.name)}</td>
+        <td style="${TDR}">${principal.toLocaleString('ko-KR')}</td>
+        <td style="${TDR}" rowspan="2">${colAmt.toLocaleString('ko-KR')}</td>
+        <td style="${TDR}" rowspan="2">${uncovered.toLocaleString('ko-KR')}</td>
+      </tr>
+      <!-- creditor ${idx+1} row2 -->
+      <tr>
+        <td style="${TDR}">${interest.toLocaleString('ko-KR')}</td>
+      </tr>
+      <!-- creditor ${idx+1} row3 -->
+      <tr>
+        <td style="${TD}" colspan="3">${escapeHtml(colDesc) || '&nbsp;'}</td>
+      </tr>`;
+    });
+
+    // 빈 행 (최소 3세트 = 9줄 보장)
+    const blankCount = Math.max(0, 3 - securedCreds.length);
+    const blankRows = Array.from({length: blankCount}, (_, i) => `
+      <tr>
+        <td style="${TD}" rowspan="3">${securedCreds.length + i + 1}</td>
+        <td style="${TD}" rowspan="3">&nbsp;</td>
+        <td style="${TDR}">&nbsp;</td>
+        <td style="${TDR}" rowspan="2">&nbsp;</td>
+        <td style="${TDR}" rowspan="2">&nbsp;</td>
+      </tr>
+      <tr><td style="${TDR}">&nbsp;</td></tr>
+      <tr><td style="${TD}" colspan="3">&nbsp;</td></tr>`).join('');
+
+    return `<h2>5. 별제권부 채권 및 이에 준하는 채권의 처리 [ 해당 있음 ${hasAny ? '<b>■</b>' : '□'} / 해당 없음 ${hasAny ? '□' : '<b>■</b>'} ]</h2>
+  <div class="indent">
+    <div style="margin:0 0 5px 0;">가. 채권의 내용</div>
+    <table style="width:100%;border-collapse:collapse;font-size:10pt;">
+      <thead>
+        <!-- 헤더 1줄 -->
+        <tr>
+          <th style="${TH}width:8%;" rowspan="3">채권<br>번호</th>
+          <th style="${TH}width:18%;" rowspan="3">채권자</th>
+          <th style="${TH}width:14%;">①채권현재액<br>(원금)</th>
+          <th style="${TH}width:20%;" rowspan="2">③별제권행사 등으로<br>변제가 예상되는 채권액</th>
+          <th style="${TH}width:20%;" rowspan="2">④별제권행사 등으로도<br>변제받을 수 없을 채권액</th>
+        </tr>
+        <!-- 헤더 2줄 -->
+        <tr>
+          <th style="${TH}">②채권현재액<br>(이자)</th>
+        </tr>
+        <!-- 헤더 3줄 -->
+        <tr>
+          <th style="${TH}" colspan="3">⑤ 별제권 등의 내용 및 목적물</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${dataRows.join('')}
+        ${blankRows}
+      </tbody>
+    </table>
+    <div style="margin:10px 0 5px 0;">나. 변제방법</div>
+    <div style="margin:3px 0 5px 16px; padding-left:24px; text-indent:-24px;">(1) 위 각 채권에 대하여 별제권 행사 등으로 예상되는 채권액(③)은 별제권 행사 등에 의한 방법으로 변제하고 이 변제계획상의 가용소득이나 재산처분에 의한 변제대상에서 제외한다.</div>
+    <div style="margin:3px 0 5px 16px; padding-left:24px; text-indent:-24px;">(2) 위 (1)항 기재 각 채권 중 별제권행사 등으로 변제받을 수 없을 채권액(④)은 미확정채권으로 보아 유보하였다가 아래 7항 기재와 같은 방법으로 변제한다.</div>
+    <div style="margin:2px 0 6px 16px; padding-left:24px; text-indent:-24px;">(3) 별제권 행사 등으로도 변제받을 수 없을 채권액이 위 가의 ④항 기재 금액을 초과하는 것으로 확정된 경우에는 채권자가 그 초과부분을 변제계획안의 변경 절차를 통하여 변제받을 수 있다.</div>
+  </div>`;
+  })()}
+
+  ${(() => {
+    const months   = Number(data.months) || 36;
+    const startISO = state.repayStartDate;
+
+    // 날짜 포맷 헬퍼
+    const fmtK = iso => {
+      if(!iso) return '(미입력)';
+      const d = new Date(iso + 'T00:00:00');
+      return d.getFullYear() + '년 ' + (d.getMonth()+1) + '월 ' + d.getDate() + '일';
+    };
+    const dayOf = iso => {
+      if(!iso) return '(?)';
+      return new Date(iso + 'T00:00:00').getDate();
+    };
+
+    // 변제종료일 = 시작일 + 개월 - 1일
+    let endStr = '(미입력)';
+    if(startISO){
+      const e = new Date(startISO + 'T00:00:00');
+      e.setMonth(e.getMonth() + months);
+      e.setDate(e.getDate() - 1);
+      endStr = e.getFullYear() + '년 ' + (e.getMonth()+1) + '월 ' + e.getDate() + '일';
+    }
+
+    const startStr   = fmtK(startISO);
+    const payDay     = dayOf(startISO);
+    const baseMethod = rp.method === 'principalInterest100' ? '원리금' : '원금';
+
+    // 변제예정액: 일반채권만 집계
+    const feeRatePlan   = Number(rp.committeeFeeRate) || 0;
+    const monthlyFeePlan = rp.hasExternalCommittee ? Math.round(data.monthlyAvailable * feeRatePlan / 100) : 0;
+    const actualMonthly  = Math.max(0, data.monthlyAvailable - monthlyFeePlan);
+    const generalRows = data.rows.filter(r => r.claimType !== '우선' && r.claimType !== '담보');
+    const monthlyGeneral = actualMonthly;
+    const totalGeneral   = actualMonthly * (Number(data.months) || 36);
+
+    // 재산처분형 해당 여부
+    const hasAssetLiquid = rp.assetLiquidation.enabled;
+
+    return `<h2>6. 일반 개인회생채권에 대한 변제</h2>
+  <div class="indent">
+    <div style="margin:0 0 5px 0;">가. 가용소득에 의한 변제</div>
+    <div style="margin:0 0 5px 16px;">(1) 월 변제예정(유보)액 및 총 변제예정(유보)액의 산정</div>
+    <div style="margin:0 0 2px 32px;">각 일반 개인회생채권 ${baseMethod}의 액수를 기준으로 월 평균 가용소득을 안분하여 산출한 금액을 각 일반 개인회생 채권자에게 변제한다. 이를 기초로 산정한 월 변제예정(유보)액은</div>
+    <div style="margin:0 0 2px 32px;">월 <b>${monthlyGeneral.toLocaleString('ko-KR')}</b>원이고, 총 변제예정(유보)액은 <b>${totalGeneral.toLocaleString('ko-KR')}</b>원 이다.</div>
+    <div style="margin:0 0 10px 32px;">구체적 산정 내역은 별지 개인회생채권 변제예정액 표 참조.</div>
+
+    <div style="margin:0 0 5px 16px;">(2) 변제방법</div>
+    <div style="margin:0 0 5px 32px;">위 (1)항의 변제예정(유보)액은 다음과 같이 분할하여 변제한다.</div>
+
+    <div style="margin:0 0 5px 32px;">(가) 기간 및 횟수</div>
+    <div style="margin:0 0 8px 48px;">${startStr} 부터 ${endStr} 까지 ${months}개월간, 합계 ${months}회</div>
+
+    <div style="margin:0 0 5px 32px;">(나) 변제월 및 변제일</div>
+    <div style="margin:0 0 4px 48px;">① ${startStr} 부터 변제계획인가일 직전 ${payDay}일까지 기간</div>
+    <div style="margin:0 0 3px 64px;">■ 변제계획인가일 직후 최초 도래하는 월의 ${payDay}일에 위 기간 동안 변제분을 개인회생절차 개시 후 변제계획 인가 전에 적립된 가용소득으로 일시에 조기 변제</div>
+    <div style="margin:0 0 12px 64px;">□ 기타 : [&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]</div>
+
+    <div style="margin:0 0 4px 48px;">② 변제계획인가일 직후 최초 도래하는 월의 ${payDay}일 부터 ${endStr} 까지 기간</div>
+    <div style="margin:0 0 3px 64px;">■ 매월마다 &nbsp;${payDay}일에 변제</div>
+    <div style="margin:0 0 3px 64px;">□ 매&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;개월마다&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;일에 각 변제</div>
+    <div style="margin:0 0 12px 64px;">□ 기타 : [&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]</div>
+
+    <div style="margin:8px 0 6px 0;">나. 재산의 처분에 의한 변제 [ 해당 있음 ${hasAssetLiquid ? '<b>■</b>' : '□'} / 해당 없음 ${hasAssetLiquid ? '□' : '<b>■</b>'} ]</div>
+  </div>`;
+  })()}
+
+  ${(() => {
+    // 미확정 채권 존재 여부 (장래구상채권)
+    const hasUnconfirmed = state.creditors.some(cr => cr.natureType === '장래구상채권' && cr.name);
+    const baseMethod = rp.method === 'principalInterest100' ? '원리금' : '원금';
+
+    return `<h2>7. 미확정 개인회생채권에 대한 조치 [ 해당 있음 ${hasUnconfirmed ? '<b>■</b>' : '□'} / 해당 없음 ${hasUnconfirmed ? '□' : '<b>■</b>'} ]</h2>
+  <div class="indent">
+    <div style="margin:0 0 6px 0;">가. 변제금액의 유보</div>
+    <div style="margin:3px 0 5px 16px; padding-left:24px; text-indent:-24px;">(1) 미확정 개인회생채권에 대하여는 변제를 유보하고, 별지 개인회생채권 변제예정액표에 기재한 금액을 당해 총 변제예정(유보)액이 될 때까지 유보하여 둔다.</div>
+    <div style="margin:3px 0 10px 16px; padding-left:24px; text-indent:-24px;">(2) 채무자는 위와 같이 유보한 금액도, 즉시 지급되는 다른 채권에 대한 변제금과 마찬가지로 아래 8항 기재 계좌에 입금한다.</div>
+
+    <div style="margin:10px 0 5px 0;">나. 미확정 개인회생채권에 대한 변제</div>
+    <div style="margin:3px 0 5px 16px;">(1) 미확정 개인회생채권이 전부 그대로 확정된 경우</div>
+    <div style="margin:2px 0 6px 32px; padding-left:0; text-indent:0;">미확정 개인회생채권의 전액에 관하여 채권의 존재가 확정된 경우에는, 그 확정 직후 유보비율을 변제비율로 적용하여 변제를 개시하고 매월의 변제기에 그 해당금액을 변제하되, 이미 분할 변제기가 도래한 부분 즉 그 동안의 유보액에 대하여는 곧바로 일시 변제한다.</div>
+    <div style="margin:7px 0 5px 16px;">(2) 미확정 개인회생채권이 전부 또는 일부 부존재하는 것으로 확정된 경우</div>
+    <div style="margin:2px 0 8px 32px;">미확정 개인회생채권이 전부 또는 일부 부존재하는 것으로 확정된 경우에는 그 확정 직후 존재하는 확정된 원금의 인용 비율에 위 가항에 의하여 지급을 유보한 금액을 곱하여 산출된 금액을 당해 개인회생채권자에게 일시에 변제한다. 유보금액 중, 미확정 개인회생채권의 일부가 존재하지 않는 것으로 됨에 따라 그 개인회생채권자에게 변제할 필요가 없게 된 나머지 유보금액은, 그 채권액 확정 직후 일반 개인회생채권자들에게 각 원금의 액수를 기준으로 안분하여 변제한다. 향후의 매월 입금액을 분배하는 기준이 될 변제비율은 위 확정 원금들 사이의 비율에 따라 새로 계산하여 정하는데, 미확정 개인회생채권의 일부가 존재하지 않는 것으로 확정됨에 따라 향후 당해 개인회생 채권자를 위한 유보가 불필요하게 된 변제기 미도래분에 대한 변제 유보예정액은, 향후 변제기 도래시 일반 개인회생채권자들에게 각 원금의 액수를 기준으로 안분되도록 한다.</div>
+    <div style="margin:7px 0 5px 16px; padding-left:24px; text-indent:-24px;">(3) 변제기간 종료시까지 미확정 개인회생채권이 미확정상태로 남는 경우에는 최종변제기에 유보한 금액 전부를 일반 개인회생채권자들에게 각 원금의 액수를 기준으로 안분하여 변제한다.</div>
+    <div style="margin:3px 0 10px 16px; padding-left:24px; text-indent:-24px;">(4) 임대차보증금반환액수가 확정되지 않은 임대차보증금 반환채권은 미확정채권으로 보아 위 가, 나항에 따라 변제하되 그 액수가 확정되고 임차인이 임차목적물을 명도함과 동시에 변제한다.</div>
+  </div>`;
+  })()}
+
+  ${(() => {
+    // 6항 중 해당 있는 항 목록 동적 생성
+    const sec6Items = ['가'];
+    if(rp.assetLiquidation.enabled) sec6Items.push('나');
+    const sec6Ref = '6항 ' + sec6Items.join(', ') + '항';
+
+    // 임치 계좌 정보
+    const bankName = state.repayBankName ? escapeHtml(state.repayBankName) : '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+    const bankAcct = state.repayBankAccount ? escapeHtml(state.repayBankAccount) : '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+
+    return `<h2>8. 변제금원의 회생위원에 대한 임치 및 지급</h2>
+  <div class="indent">
+    <div style="margin:0 0 7px 0;">채무자는 위 ${sec6Ref}에 의하여 개인회생채권자들에게 변제하여야 할 금액을 개시결정시 통지되는 개인회생위원의 예금계좌 {${bankName}은행 &nbsp;계좌번호 [${bankAcct}]}에 순차 임치하고, 개인회생 채권자는 법원에 예금계좌를 신고하여 회생위원으로부터 변제액을 송금받는 방법으로 지급받는다.</div>
+    <div style="margin:0 0 0 0;">회생위원은 계좌번호를 신고하지 않은 개인회생채권자에 대하여는 변제액을 적립하였다가 이를 연 1회 개인회생사건이 계속되어 있는 지방법원에 공탁하여 지급할 수 있다.</div>
+  </div>`;
+  })()}
+
+  <h2>9. 면책의 범위 및 효력발생시기</h2>
+  <div class="indent">
+    <div style="margin:0 0 7px 0;">채무자가 개인회생채권에 대하여 이 변제계획에 따라 변제를 완료하고 면책신청을 하여 면책결정이 확정되었을 경우에는, 이 변제계획에 따라 변제한 것을 제외하고 개인회생채권자에 대한 채무에 관하여 그 책임이 면제된다.</div>
+    <div style="margin:0 0 0 0;">단, 채무자 회생 및 파산에 관한 법률 제625조 제2항 단서 각호 소정의 채무에 관하여는 그러하지 아니한다.</div>
+  </div>
+
+  ${(() => {
+    const hasMisc = !!(rp.miscClause && rp.miscClause.trim());
+    return `<h2>10. 기타사항 [ 해당 있음 ${hasMisc ? '<b>■</b>' : '□'} / 해당 없음 ${hasMisc ? '□' : '<b>■</b>'} ]</h2>
+  <table style="width:100%;border-collapse:collapse;">
     <tbody>
-      ${data.rows.map((r,i) => `<tr><td style="text-align:center;">${i+1}</td><td>${escapeHtml(r.name)}</td><td style="text-align:right;">${r.isFuture?'미발생':r.amount.toLocaleString('ko-KR')}</td><td style="text-align:right;">${r.monthly.toLocaleString('ko-KR')}</td><td style="text-align:right;">${r.total.toLocaleString('ko-KR')}</td></tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:#888;">채권자가 없습니다</td></tr>'}
+      <tr>
+        <td style="border:1px solid #000;padding:8px 10px;height:100px;vertical-align:top;">${hasMisc ? escapeHtml(rp.miscClause).replace(/\n/g,'<br>') : '&nbsp;'}</td>
+      </tr>
     </tbody>
-  </table>
-  <div class="indent">변제율: ${data.repayRate.toFixed(2)}% &nbsp;|&nbsp; 청산가치: ${liquidation.toLocaleString('ko-KR')}원 &nbsp;|&nbsp; 총 변제예정액: ${data.totalRepay.toLocaleString('ko-KR')}원</div>
-
-  <h2>6. 변제방법</h2>
-  <div class="indent">채무자는 매월 위 가용소득을 변제계획에 따라 정해진 계좌에 납입하고, 회생위원은 이를 관리하여 각 채권자에게 안분 배당한다.</div>
-
-  <h2>7. 담보권 및 별제권에 관한 사항</h2>
-  <div class="indent">${state.assets.realties.some(r => (r.linkedCreditorIds||[]).length) || state.assets.vehicles.some(r => (r.linkedCreditorIds||[]).length) ? '재산목록에 담보권이 설정된 재산이 있습니다. 세부 내역은 재산목록을 참조하시기 바랍니다.' : '해당없음'}</div>
-
-  <h2>8. 미확정채권에 관한 사항</h2>
-  <div class="indent">미확정채권이 확정되는 경우, 그 채권액에 따라 이 변제계획을 변경하거나 추가로 정할 수 있다.</div>
-
-  <h2>9. 인가 후 변경사항</h2>
-  <div class="indent">채무자의 소득 또는 재산에 중대한 변경이 있는 경우, 법원에 변제계획의 변경을 신청할 수 있다.</div>
-
-  <h2>10. 기타사항</h2>
-  <div class="indent">${rp.miscClause ? escapeHtml(rp.miscClause).replace(/\n/g,'<br>') : '해당없음'}</div>
+  </table>`;
+  })()}
 
   <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 200); };<\/script>
 </body></html>`;
 
-  const printWin = window.open('', '_blank');
-  if(!printWin){
-    alert('팝업이 차단되었습니다. 브라우저의 팝업 차단을 해제해주세요.');
-    return;
-  }
-  printWin.document.open();
-  printWin.document.write(html);
-  printWin.document.close();
+  return openPrintWindow(html, returnOnly);
 }
 
 function newStmtCareerRow(){ return { id:'sc_'+Math.random().toString(36).slice(2,9), periodStart:'', periodEnd:'', isCurrent:false, businessType:'', workplace:'', position:'', natureType:'근무' }; }
+function newStmtMarriageRow(){ return { id:'sm_'+Math.random().toString(36).slice(2,9), date:'', spouseName:'', type:'혼인' }; }
 function newStmtLegalActionRow(){ return { id:'sl_'+Math.random().toString(36).slice(2,9), detail:'', creditor:'', court:'', caseNumber:'' }; }
 
 function renderStatement(){
   const st = state.statement;
 
+  document.getElementById('stmtEduDate').value = fmtDateInputDisplay(st.finalEducation.date);
+  document.getElementById('stmtEduStatus').value = st.finalEducation.status;
+
   renderStmtCareer();
+  renderStmtMarriage();
 
   document.getElementById('stmtHousingStart').value = fmtDateInputDisplay(st.housing.startDate);
   document.getElementById('stmtHousingType').value = st.housing.type;
@@ -3852,7 +4143,25 @@ function renderStmtCareer(){
       </select></td>
       <td><button class="del-row" data-id="${row.id}" title="삭제">✕</button></td>
     </tr>`).join('');
-  const scEl=document.getElementById('stmtCareerCount'); if(scEl) scEl.textContent=rows.length;
+  document.getElementById('stmtCareerCount').textContent = rows.length + '건';
+}
+
+function renderStmtMarriage(){
+  const rows = state.statement.pastMarriageEvents;
+  const body = document.getElementById('stmtMarriageBody');
+  body.innerHTML = rows.map(row => `
+    <tr>
+      <td><input type="text" data-id="${row.id}" data-field="date" value="${escapeHtml(fmtDateInputDisplay(row.date))}" placeholder="26/1/1"></td>
+      <td><input type="text" data-id="${row.id}" data-field="spouseName" value="${escapeHtml(row.spouseName)}" placeholder="상대방 성명"></td>
+      <td><select data-id="${row.id}" data-field="type">
+        <option value="혼인" ${row.type==='혼인'?'selected':''}>혼인</option>
+        <option value="이혼" ${row.type==='이혼'?'selected':''}>이혼</option>
+        <option value="입양" ${row.type==='입양'?'selected':''}>입양</option>
+        <option value="파양" ${row.type==='파양'?'selected':''}>파양</option>
+      </select></td>
+      <td><button class="del-row" data-id="${row.id}" title="삭제">✕</button></td>
+    </tr>`).join('');
+  document.getElementById('stmtMarriageCount').textContent = rows.length + '건';
 }
 
 function renderStmtLegalAction(){
@@ -3876,6 +4185,18 @@ function bindStatement(){
       e.target.blur();
     }
   });
+
+  document.getElementById('stmtEduDate').addEventListener('change', e => {
+    const raw = e.target.value.trim();
+    if(!raw){ state.statement.finalEducation.date=''; e.target.classList.remove('date-error'); save(); return; }
+    const parsed = parseFlexibleDate(raw);
+    if(parsed===null){ e.target.classList.add('date-error'); save(); return; }
+    state.statement.finalEducation.date = parsed;
+    e.target.value = fmtDateInputDisplay(parsed);
+    e.target.classList.remove('date-error');
+    save();
+  });
+  document.getElementById('stmtEduStatus').addEventListener('change', e => { state.statement.finalEducation.status = e.target.value; save(); });
 
   document.getElementById('btnAddStmtCareer').addEventListener('click', () => {
     state.statement.pastCareers.push(newStmtCareerRow());
@@ -3922,6 +4243,49 @@ function bindStatement(){
     if(!btn) return;
     state.statement.pastCareers = state.statement.pastCareers.filter(r => r.id !== btn.dataset.id);
     renderStmtCareer();
+    save();
+  });
+
+  document.getElementById('btnAddStmtMarriage').addEventListener('click', () => {
+    state.statement.pastMarriageEvents.push(newStmtMarriageRow());
+    renderStmtMarriage();
+    save();
+  });
+  document.getElementById('stmtMarriageBody').addEventListener('input', e => {
+    const t = e.target;
+    const id = t.dataset.id, field = t.dataset.field;
+    if(!id || !field) return;
+    const row = state.statement.pastMarriageEvents.find(r => r.id === id);
+    if(!row) return;
+    if(field !== 'date') row[field] = t.value;
+    save();
+  });
+  document.getElementById('stmtMarriageBody').addEventListener('change', e => {
+    const t = e.target;
+    const id = t.dataset.id, field = t.dataset.field;
+    if(!id) return;
+    const row = state.statement.pastMarriageEvents.find(r => r.id === id);
+    if(!row) return;
+    if(field === 'date'){
+      const raw = t.value.trim();
+      if(!raw){ row.date=''; t.classList.remove('date-error'); save(); return; }
+      const parsed = parseFlexibleDate(raw);
+      if(parsed===null){ t.classList.add('date-error'); save(); return; }
+      row.date = parsed;
+      t.value = fmtDateInputDisplay(parsed);
+      t.classList.remove('date-error');
+      save();
+      return;
+    }
+    if(t.tagName !== 'SELECT') return;
+    row.type = t.value;
+    save();
+  });
+  document.getElementById('stmtMarriageBody').addEventListener('click', e => {
+    const btn = e.target.closest('.del-row');
+    if(!btn) return;
+    state.statement.pastMarriageEvents = state.statement.pastMarriageEvents.filter(r => r.id !== btn.dataset.id);
+    renderStmtMarriage();
     save();
   });
 
@@ -4027,19 +4391,7 @@ function bindStatement(){
 function printStatement(){
   const st = state.statement;
 
-  // 현재 소득처(수입·지출 탭)를 "현재까지" 경력으로 변환
-  const currentCareers = state.income.sources.map(src => ({
-    periodStart: src.extra || '', periodEnd: '', isCurrent: true,
-    businessType: src.type === 'selfEmployed' ? (src.title||'') : '',
-    workplace: src.name || '',
-    position: src.type === 'selfEmployed' ? '' : (src.title||''),
-    natureType: src.type === 'selfEmployed' ? '자영' : '근무'
-  }));
-  // 과거(그만둔) 경력은 진술서 탭에서 직접 입력한 목록 사용
-  const pastCareersOnly = st.pastCareers.map(r => ({ ...r }));
-  const allCareers = [...currentCareers, ...pastCareersOnly];
-
-  const careerList = allCareers.length ? allCareers : [null];
+  const careerList = st.pastCareers.length ? st.pastCareers : [null];
   const careerHtml = careerList.map(r => {
     if(!r) return `<tr><td colspan="2" style="text-align:center;color:#888;">기재사항 없음</td></tr>`;
     const periodText = `${fmtDateDot(r.periodStart)||'-'} 부터 ${r.isCurrent ? '현재' : (fmtDateDot(r.periodEnd)||'-')} 까지`;
@@ -4058,7 +4410,7 @@ function printStatement(){
     </tr>`;
   }).join('');
 
-  const marriageList = state.marriageHistory.length ? state.marriageHistory : [null];
+  const marriageList = st.pastMarriageEvents.length ? st.pastMarriageEvents : [null];
   const marriageHtml = marriageList.map(r => {
     if(!r) return `<tr><td colspan="3" style="text-align:center;color:#888;">해당사항 없음</td></tr>`;
     return `<tr>
@@ -4149,7 +4501,7 @@ function printStatement(){
 
   <div class="sec-title">Ⅰ. 경력</div>
   <div class="cap">1. 최종학력</div>
-  <div class="indent">${escapeHtml(state.debtor.finalEducation.school)||'-'} &nbsp;${fmtDateDot(state.debtor.finalEducation.date)||'-'} (${state.debtor.finalEducation.status})</div>
+  <div class="indent">${fmtDateDot(st.finalEducation.date)||'-'} (${st.finalEducation.status})</div>
 
   <div class="cap">2. 과거 경력 <span style="font-weight:400;font-size:10.5pt;color:#555;">(최근 경력부터 기재)</span></div>
   <table>
@@ -4199,28 +4551,85 @@ function printStatement(){
   <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 200); };<\/script>
 </body></html>`;
 
-  const printWin = window.open('', '_blank');
-  if(!printWin){
-    alert('팝업이 차단되었습니다. 브라우저의 팝업 차단을 해제해주세요.');
-    return;
-  }
-  printWin.document.open();
-  printWin.document.write(html);
-  printWin.document.close();
+  return openPrintWindow(html, false);
 }
 
-function printRepaymentSchedule(){
+function printRepaymentSchedule(returnOnly=false){
   const data = computeRepaymentSchedule();
   const liquidation = getLiquidationValueForPlan();
+  const rp = state.repaymentPlan;
+  const baseMethod = rp.method === 'principalInterest100' ? '원리금' : '원금';
 
-  const trs = data.rows.map((r, i) => `
-    <tr>
-      <td style="text-align:center;">${i+1}</td>
-      <td>${escapeHtml(r.name)}</td>
-      <td style="text-align:right;">${r.isFuture ? '미발생' : r.amount.toLocaleString('ko-KR')}</td>
-      <td style="text-align:right;">${r.isFuture ? '0' : r.monthly.toLocaleString('ko-KR')}</td>
-      <td style="text-align:right;">${r.isFuture ? '0' : r.total.toLocaleString('ko-KR')}</td>
+  const TH  = 'border:1px solid #333;padding:5px 6px;text-align:center;background:#f2f2f2;font-weight:600;font-size:11.5px;';
+  const TH2 = 'border:1px solid #333;padding:4px 6px;text-align:center;background:#f2f2f2;font-weight:500;font-size:10.5px;';
+  const TD  = 'border:1px solid #333;padding:5px 6px;';
+  const TDR = 'border:1px solid #333;padding:5px 6px;text-align:right;';
+
+  // 각 채권자별 확정/미확정 금액 계산
+  const months = Number(data.months) || 36;
+  const feeRateSched   = Number(rp.committeeFeeRate) || 0;
+  const monthlyFeeSched = rp.hasExternalCommittee ? Math.round(data.monthlyAvailable * feeRateSched / 100) : 0;
+  const monthlyAvail   = Math.max(0, data.monthlyAvailable - monthlyFeeSched); // 실제가용소득
+
+  const credDisplayNums = computeDisplayNumbers();
+
+  const credRows = state.creditors.filter(c => c.name).map((cr, i) => {
+    const isFuture = cr.natureType === '장래구상채권';
+    const hasAtt   = cr.hasAttachment && cr.attachmentType1;
+    const att      = cr.attachmentType1 || {};
+    const principal = Number(cr.principal) || 0;
+    const interest  = Number(cr.interest)  || 0;
+    const total     = isFuture ? 0 : principal + interest;
+    const colAmt    = Number(att.amount) || 0;
+
+    let confirmed   = 0;
+    let unconfirmed = 0;
+    if(isFuture){
+      confirmed = 0; unconfirmed = 0;
+    } else if(hasAtt){
+      // 부속서류 있는 경우: 3칸=0, 4칸=④(변제불가액)
+      confirmed   = 0;
+      unconfirmed = Math.max(0, total - colAmt);
+    } else {
+      confirmed   = principal;  // 원금만
+      unconfirmed = 0;
+    }
+    return { idx: credDisplayNums[cr.id] || (i+1), name: cr.name, isFuture, confirmed, unconfirmed };
+  });
+
+  // 안분 기준 총액
+  const totalBase = credRows.reduce((s, r) => s + r.confirmed + r.unconfirmed, 0);
+
+  // 월 변제금 안분
+  const credData = credRows.map(r => {
+    const amtTotal = r.confirmed + r.unconfirmed;
+    const monthlyTotal = (totalBase > 0 && !r.isFuture)
+      ? Math.ceil((amtTotal / totalBase) * monthlyAvail / 10) * 10
+      : 0;
+    const monthlyConf   = (amtTotal > 0) ? Math.ceil((r.confirmed   / amtTotal) * monthlyTotal) : 0;
+    const monthlyUnconf = (amtTotal > 0) ? Math.ceil((r.unconfirmed / amtTotal) * monthlyTotal) : 0;
+    return { ...r, monthlyConf, monthlyUnconf,
+             totalConf: monthlyConf * months, totalUnconf: monthlyUnconf * months };
+  });
+
+  const trs = credData.map(r => `
+    <tr class="data-row">
+      <td style="${TDR.replace('right','center')}">${r.idx}</td>
+      <td style="${TD}text-align:center;">${escapeHtml(r.name)}</td>
+      <td style="${TDR}">${r.isFuture ? '미발생' : r.confirmed.toLocaleString('ko-KR')}</td>
+      <td style="${TDR}">${r.isFuture ? '미발생' : r.unconfirmed ? r.unconfirmed.toLocaleString('ko-KR') : ''}</td>
+      <td style="${TDR}">${r.isFuture ? '0' : r.monthlyConf.toLocaleString('ko-KR')}</td>
+      <td style="${TDR}">${r.isFuture ? '0' : (r.monthlyUnconf ? r.monthlyUnconf.toLocaleString('ko-KR') : '')}</td>
+      <td style="${TDR}">${r.isFuture ? '0' : r.totalConf.toLocaleString('ko-KR')}</td>
+      <td style="${TDR}">${r.isFuture ? '0' : (r.totalUnconf ? r.totalUnconf.toLocaleString('ko-KR') : '')}</td>
     </tr>`).join('');
+
+  const sumConf       = credData.reduce((s,r) => s + r.confirmed, 0);
+  const sumUnconf     = credData.reduce((s,r) => s + r.unconfirmed, 0);
+  const sumMthConf    = credData.reduce((s,r) => s + r.monthlyConf, 0);
+  const sumMthUnconf  = credData.reduce((s,r) => s + r.monthlyUnconf, 0);
+  const sumTotConf    = credData.reduce((s,r) => s + r.totalConf, 0);
+  const sumTotUnconf  = credData.reduce((s,r) => s + r.totalUnconf, 0);
 
   const meets = data.totalRepay >= liquidation;
 
@@ -4228,88 +4637,1262 @@ function printRepaymentSchedule(){
 <title>개인회생채권 변제예정액표 - ${escapeHtml(state.debtor.name || '')}</title>
 <style>
   body{font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;padding:28px;color:#111;font-size:12px;}
-  h1{text-align:center;font-size:17px;margin:0 0 16px;letter-spacing:2px;}
-  h2{font-size:13px;margin:20px 0 8px;border-bottom:2px solid #333;padding-bottom:4px;}
-  table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:6px;}
+  h1{text-align:center;font-size:18px;margin:0 0 14px;letter-spacing:3px;}
+  table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:5px;}
   th,td{border:1px solid #333;padding:6px 9px;}
   th{background:#f2f2f2;font-weight:600;text-align:center;}
   tfoot td{font-weight:bold;background:#f7f7f7;}
   .basic-table td{border:none;padding:4px 8px;}
-  .basic-box{border:1px solid #333;padding:10px 14px;margin-bottom:6px;}
+  .basic-box{padding:5px 0;margin-bottom:5px;}
+  .data-row td{height:30px;min-height:30px;padding:4px 9px;vertical-align:middle;}
+  .sec-title{font-size:13.5px;font-weight:700;margin:24px 0 8px;display:flex;justify-content:space-between;align-items:baseline;}
   @media print{ body{padding:10px;} }
 </style></head><body>
   <h1>개인회생채권 변제예정액 표</h1>
 
-  <h2>1. 기초사항 <span style="font-weight:400;font-size:10.5px;">(단위: 원)</span></h2>
-  <div class="basic-box">
-    <table class="basic-table">
-      <tr>
-        <td style="width:33%;"><b>(A) 월평균 가용소득</b></td>
-        <td style="width:33%;"><b>(B) 변제횟수</b></td>
-        <td style="width:33%;"><b>(C) 총 가용소득</b></td>
-      </tr>
-      <tr>
-        <td>${data.monthlyAvailable.toLocaleString('ko-KR')}원</td>
-        <td>${data.months}회</td>
-        <td>${(data.monthlyAvailable*data.months).toLocaleString('ko-KR')}원</td>
-      </tr>
-    </table>
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin:24px 0 8px;">
+    <span style="font-size:13.5px;font-weight:700;">1. 기초사항</span>
+    <span style="font-size:10.5px;">(단위: 원)</span>
   </div>
+  ${(() => {
+    const feeRate   = Number(rp.committeeFeeRate) || 0;
+    const BH  = 'border:1px solid #333;padding:6px 8px;text-align:center;background:#f2f2f2;font-weight:600;';
+    const BV  = 'border:1px solid #333;padding:6px 8px;text-align:right;';
+    const BN  = 'border:none;padding:0;';
+    const SPC = 'border:none;padding:0;width:2%;';
+    const BLR = 'border-left:none;border-right:none;border-top:1px solid #333;border-bottom:1px solid #333;padding:0;height:4px;';
+    const monthlyFee = Math.round(data.monthlyAvailable * feeRate / 100);
+    const actualAvail = Math.max(0, data.monthlyAvailable - monthlyFee);
+    const months = Number(data.months) || 36;
 
-  <h2>2. 채권자별 변제예정액의 산정내역 <span style="font-weight:400;font-size:10.5px;">(단위: 원)</span></h2>
-  <table>
+    if(!rp.hasExternalCommittee){
+      // 기본형: 1줄 8칸
+      return `<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:6px;table-layout:fixed;">
+      <colgroup>
+        <col style="width:18%"><col style="width:18%"><col style="width:3%">
+        <col style="width:13%"><col style="width:13%"><col style="width:3%">
+        <col style="width:16%"><col style="width:16%">
+      </colgroup>
+      <tbody><tr>
+        <td style="${BH}">(A) 월평균 가용소득</td>
+        <td style="${BV}">${data.monthlyAvailable.toLocaleString('ko-KR')}</td>
+        <td style="${BN}"></td>
+        <td style="${BH}">(B) 변제횟수</td>
+        <td style="${BV}">${months}회</td>
+        <td style="${BN}"></td>
+        <td style="${BH}">(C) 총 가용소득</td>
+        <td style="${BV}">${(data.monthlyAvailable*months).toLocaleString('ko-KR')}</td>
+      </tr></tbody></table>`;
+    } else {
+      // 외부회생위원 선임형: 3줄 8칸
+      const SPC = 'border:none;padding:0;width:2%;';
+      const BLR = 'border-left:none;border-right:none;border-top:1px solid #333;border-bottom:1px solid #333;padding:0;height:4px;';
+      return `<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:6px;table-layout:fixed;">
+      <colgroup>
+        <col style="width:20%"><col style="width:12%"><col style="width:2%">
+        <col style="width:15%"><col style="width:13%"><col style="width:2%">
+        <col style="width:18%"><col style="width:18%">
+      </colgroup>
+      <tbody>
+        <!-- 1줄: ③ ④ -->
+        <tr>
+          <td style="${BH}">③ 월평균 가용소득</td>
+          <td style="${BV}">${data.monthlyAvailable.toLocaleString('ko-KR')}</td>
+          <td style="${SPC}"></td>
+          <td style="${BH}">④ 월 회생위원 보수</td>
+          <td style="${BV}">${monthlyFee.toLocaleString('ko-KR')}</td>
+          <td style="border:none;padding:0;" colspan="3"></td>
+        </tr>
+        <!-- 2줄: 구분선 -->
+        <tr style="height:4px;">
+          <td style="${BLR}" colspan="2"></td>
+          <td style="border:none;padding:0;"></td>
+          <td style="border:none;padding:0;" colspan="2"></td>
+          <td style="border:none;padding:0;" colspan="3"></td>
+        </tr>
+        <!-- 3줄: A B C -->
+        <tr>
+          <td style="${BH}">(A) 월 실제가용소득<br>(③-④)</td>
+          <td style="${BV}">${actualAvail.toLocaleString('ko-KR')}</td>
+          <td style="${SPC}"></td>
+          <td style="${BH}">(B) 변제횟수(회)</td>
+          <td style="${BV}">${months}회</td>
+          <td style="${SPC}"></td>
+          <td style="${BH}">(C) 총 실제가용소득(원)</td>
+          <td style="${BV}">${(actualAvail*months).toLocaleString('ko-KR')}</td>
+        </tr>
+      </tbody></table>`;
+    }
+  })()}
+
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin:24px 0 8px;">
+    <span style="font-size:13.5px;font-weight:700;">2. 채권자별 변제예정액의 산정내역</span>
+    <span style="font-size:10.5px;">(단위: 원)</span>
+  </div>
+  <table style="width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:6px;">
     <thead>
       <tr>
-        <th style="width:36px;">번호</th>
-        <th>채권자</th>
-        <th style="width:130px;">(D) 개인회생채권액</th>
-        <th style="width:130px;">(E) 월 변제예정액</th>
-        <th style="width:140px;">(F) 총 변제예정액</th>
+        <th style="${TH}width:6%;" rowspan="2">채권<br>번호</th>
+        <th style="${TH}width:18%;" rowspan="2">채권자</th>
+        <th style="${TH}" colspan="2">(D) 개인회생채권액</th>
+        <th style="${TH}" colspan="2">(E) 월 변제예정(유보)액</th>
+        <th style="${TH}" colspan="2">(F) 총 변제예정(유보)액</th>
+      </tr>
+      <tr>
+        <th style="${TH2}">확정채권액<br>[${baseMethod}]</th>
+        <th style="${TH2}">미확정채권액<br>[${baseMethod}]</th>
+        <th style="${TH2}">확정채권액<br>[${baseMethod}]</th>
+        <th style="${TH2}">미확정채권액<br>[${baseMethod}]</th>
+        <th style="${TH2}">확정채권액<br>[${baseMethod}]</th>
+        <th style="${TH2}">미확정채권액<br>[${baseMethod}]</th>
       </tr>
     </thead>
-    <tbody>${trs || '<tr><td colspan="5" style="text-align:center;color:#888;">채권자가 없습니다</td></tr>'}</tbody>
+    <tbody>${trs || `<tr><td colspan="8" style="text-align:center;color:#888;padding:10px;">채권자가 없습니다</td></tr>`}</tbody>
     <tfoot>
       <tr>
-        <td colspan="2">합계</td>
-        <td style="text-align:right;">${data.totalDebt.toLocaleString('ko-KR')}</td>
-        <td style="text-align:right;">${data.totalMonthly.toLocaleString('ko-KR')}</td>
-        <td style="text-align:right;">${data.totalRepay.toLocaleString('ko-KR')}</td>
+        <td colspan="2" style="border:1px solid #333;padding:5px 6px;font-weight:bold;background:#f7f7f7;text-align:center;height:30px;vertical-align:middle;">합계</td>
+        <td style="border:1px solid #333;padding:5px 6px;text-align:right;font-weight:bold;background:#f7f7f7;">${sumConf.toLocaleString('ko-KR')}</td>
+        <td style="border:1px solid #333;padding:5px 6px;text-align:right;font-weight:bold;background:#f7f7f7;">${sumUnconf.toLocaleString('ko-KR')}</td>
+        <td style="border:1px solid #333;padding:5px 6px;text-align:right;font-weight:bold;background:#f7f7f7;">${sumMthConf.toLocaleString('ko-KR')}</td>
+        <td style="border:1px solid #333;padding:5px 6px;text-align:right;font-weight:bold;background:#f7f7f7;">${sumMthUnconf.toLocaleString('ko-KR')}</td>
+        <td style="border:1px solid #333;padding:5px 6px;text-align:right;font-weight:bold;background:#f7f7f7;">${sumTotConf.toLocaleString('ko-KR')}</td>
+        <td style="border:1px solid #333;padding:5px 6px;text-align:right;font-weight:bold;background:#f7f7f7;">${sumTotUnconf.toLocaleString('ko-KR')}</td>
+      </tr>
+      <tr>
+        <td colspan="2" style="border:1px solid #333;padding:5px 6px;font-weight:bold;background:#eee;text-align:center;height:30px;vertical-align:middle;">총계</td>
+        <td colspan="2" style="border:1px solid #333;padding:5px 6px;text-align:right;font-weight:bold;background:#eee;">${(sumConf+sumUnconf).toLocaleString('ko-KR')}</td>
+        <td colspan="2" style="border:1px solid #333;padding:5px 6px;text-align:right;font-weight:bold;background:#eee;">${(sumMthConf+sumMthUnconf).toLocaleString('ko-KR')}</td>
+        <td colspan="2" style="border:1px solid #333;padding:5px 6px;text-align:right;font-weight:bold;background:#eee;">${(sumTotConf+sumTotUnconf).toLocaleString('ko-KR')}</td>
       </tr>
     </tfoot>
   </table>
 
-  <h2>3. 변제율</h2>
-  <div class="basic-box">${data.repayRate.toFixed(2)}% 상당액</div>
-
-  <h2>4. 청산가치와의 비교 <span style="font-weight:400;font-size:10.5px;">(단위: 원)</span></h2>
-  <div class="basic-box">
-    <table class="basic-table">
-      <tr>
-        <td style="width:50%;"><b>(J) 청산가치</b></td>
-        <td style="width:50%;"><b>(K) 가용소득에 의한 총 변제예정액</b></td>
-      </tr>
-      <tr>
-        <td>${liquidation.toLocaleString('ko-KR')}원</td>
-        <td>${data.totalRepay.toLocaleString('ko-KR')}원</td>
-      </tr>
-    </table>
-    <div style="margin-top:8px;">${meets
-      ? `<b style="color:#1a7a1a;">✓ 청산가치 보장 요건 충족</b> (총 변제예정액이 청산가치 이상)`
-      : `<b style="color:#c0392b;">✗ 청산가치 보장 요건 미충족</b> (총 변제예정액이 청산가치보다 ${(liquidation-data.totalRepay).toLocaleString('ko-KR')}원 부족)`}</div>
+  <div style="margin:24px 0 8px;font-size:13.5px;">
+    <span style="font-weight:700;">3. 변제율</span>
+    <span style="margin-left:16px;font-size:12.5px;letter-spacing:0.5px;"><b>[${baseMethod}]</b> 기준 &nbsp;&nbsp; <b>${data.repayRate.toFixed(2)}%</b> &nbsp;상당액</span>
   </div>
-  <div style="font-size:10.5px;color:#666;margin-top:6px;">※ 월 변제예정액은 각 채권자의 채권액 비율에 따라 안분하여 10원 단위로 올림 계산되었습니다. 회생위원 보수, 우선채권 우선변제 등은 반영되지 않은 기초 산정치이며, 정밀 산정은 변제계획안 확정 단계에서 조정이 필요할 수 있습니다.</div>
+
+  <div style="margin:24px 0 8px;">
+    <span style="font-size:13.5px;font-weight:700;">4. 청산가치와의 비교</span>
+  </div>
+  <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:6px;table-layout:fixed;">
+    <colgroup>
+      <col style="width:14%">
+      <col style="width:20%">
+      <col style="width:3%">
+      <col style="width:30%">
+      <col style="width:20%">
+      <col style="width:13%">
+    </colgroup>
+    <thead>
+      <tr>
+        <td colspan="3" style="border:none;padding:0;"></td>
+        <td colspan="2" style="border:none;padding:2px 0;text-align:right;font-size:10px;color:#555;">(단위: 원)</td>
+        <td style="border:none;padding:0;"></td>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="border:1px solid #333;padding:6px 8px;text-align:center;background:#f2f2f2;font-weight:600;" rowspan="2">(J) 청산가치</td>
+        <td style="border:1px solid #333;padding:6px 8px;text-align:right;" rowspan="2">${liquidation.toLocaleString('ko-KR')}</td>
+        <td style="border:none;padding:0;" rowspan="2"></td>
+        <td style="border:1px solid #333;padding:6px 8px;text-align:center;background:#f2f2f2;font-weight:600;height:40px;vertical-align:middle;">(K) 가용소득에 의한 총 변제예정(유보)액</td>
+        <td style="border:1px solid #333;padding:6px 8px;text-align:right;">${(sumTotConf+sumTotUnconf).toLocaleString('ko-KR')}</td>
+        <td style="border-left:1px solid #333;border-top:none;border-bottom:none;border-right:none;padding:0;"></td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #333;padding:6px 8px;text-align:center;background:#f2f2f2;font-weight:600;height:40px;vertical-align:middle;">(L) 현재가치</td>
+        <td style="border:1px solid #333;padding:6px 8px;text-align:right;">${(() => {
+          const r = 0.05 / 12;
+          const n = Number(data.months) || 36;
+          const m = Math.max(0, n - 3);
+          const leibniz = m > 0 ? 3 + (1 - Math.pow(1 + r, -m)) / r : n;
+          const pv = Math.round(data.monthlyAvailable * leibniz);
+          return pv.toLocaleString('ko-KR');
+        })()}</td>
+        <td style="border-left:1px solid #333;border-top:none;border-bottom:none;border-right:none;padding:0;"></td>
+      </tr>
+    </tbody>
+  </table>
+
   <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 200); };<\/script>
 </body></html>`;
 
-  const printWin = window.open('', '_blank');
-  if(!printWin){
-    alert('팝업이 차단되었습니다. 브라우저의 팝업 차단을 해제해주세요.');
-    return;
-  }
-  printWin.document.open();
-  printWin.document.write(html);
-  printWin.document.close();
+  return openPrintWindow(html, returnOnly);
 }
+
+
+
+
+function printRepaymentSchedulePrincipalFirst(returnOnly=false){
+  const data = computeRepaymentSchedule();
+  const liquidation = getLiquidationValueForPlan();
+  const rp = state.repaymentPlan;
+  const credNums = computeDisplayNumbers();
+
+  const feeRate    = Number(rp.committeeFeeRate) || 0;
+  const monthlyFee = rp.hasExternalCommittee ? Math.round(data.monthlyAvailable * feeRate / 100) : 0;
+  const actualM    = Math.max(0, data.monthlyAvailable - monthlyFee);
+
+  const allCreds = state.creditors.filter(c => c.name);
+  const isFut    = cr => cr.natureType === '장래구상채권';
+  const getPri   = cr => isFut(cr) ? 0 : (Number(cr.principal)||0);
+  const getInt   = cr => isFut(cr) ? 0 : (Number(cr.interest)||0);
+
+  const totalPri = allCreds.reduce((s,c) => s + getPri(c), 0);
+  const totalInt = allCreds.reduce((s,c) => s + getInt(c), 0);
+
+  // 원금 완납까지 K개월
+  const K = (totalPri > 0 && actualM > 0) ? Math.ceil(totalPri / actualM) : 1;
+  const p1Months = Math.max(0, K - 1);
+  const priRem   = totalPri - p1Months * actualM;          // K회 원금 잔여
+  const intAvail2 = Math.max(0, actualM - priRem);          // K회 이자 가용
+
+  // 이자 상환 단계
+  const intAfterP2  = Math.max(0, totalInt - intAvail2);
+  const M_extra     = (intAfterP2 > 0 && actualM > 0) ? Math.ceil(intAfterP2 / actualM) : 0;
+  const M           = K + M_extra;
+  const p3Months    = Math.max(0, M_extra - 1);
+  const intRem      = intAfterP2 - p3Months * actualM;      // 마지막 회 이자 잔여
+
+  const fmt = n => n != null ? n.toLocaleString('ko-KR') : '';
+
+  // 스타일 상수
+  const TH ='border:1px solid #333;padding:5px 7px;text-align:center;background:#f2f2f2;font-weight:600;font-size:11px;';
+  const TH2='border:1px solid #333;padding:4px 6px;text-align:center;background:#f2f2f2;font-weight:500;font-size:10px;';
+  const TDC='border:1px solid #333;padding:4px 7px;text-align:center;height:30px;vertical-align:middle;font-size:11px;';
+  const TDL='border:1px solid #333;padding:4px 7px;text-align:left;height:30px;vertical-align:middle;font-size:11px;';
+  const TDR='border:1px solid #333;padding:4px 7px;text-align:right;height:30px;vertical-align:middle;font-size:11px;';
+  const FT ='border:1px solid #333;padding:5px 7px;text-align:right;font-weight:bold;font-size:11px;';
+  const FTC='border:1px solid #333;padding:5px 7px;text-align:center;font-weight:bold;font-size:11px;';
+  const BN ='border:none;padding:0;';
+
+  const makeHdr = () => `<thead><tr>
+    <th style="${TH}width:6%;" rowspan="2">채권번호</th>
+    <th style="${TH}width:18%;" rowspan="2">채권자</th>
+    <th style="${TH}" colspan="2">(D) 개인회생채권액</th>
+    <th style="${TH}" colspan="2">(E) 월 변제예정(유보)액</th>
+    <th style="${TH}" colspan="2">(F) 총 변제예정(유보)액</th>
+  </tr><tr>
+    <th style="${TH2}">원금</th>
+    <th style="${TH2}">이자</th>
+    <th style="${TH2}">원금</th>
+    <th style="${TH2}">이자</th>
+    <th style="${TH2}">원금</th>
+    <th style="${TH2}">이자</th>
+  </tr></thead>`;
+
+  const makeRows = (rows, showM) => rows.map(r => `<tr>
+    <td style="${TDC}">${credNums[r.id]||''}</td>
+    <td style="${TDL}">${escapeHtml(r.cr.name)}</td>
+    <td style="${TDR}">${isFut(r.cr)?'미발생':fmt(r.pri)}</td>
+    <td style="${TDR}">${isFut(r.cr)?'미발생':fmt(r.int)}</td>
+    <td style="${TDR}">${showM&&r.mPri!=null?fmt(r.mPri):''}</td>
+    <td style="${TDR}">${showM&&r.mInt!=null&&r.mInt?fmt(r.mInt):''}</td>
+    <td style="${TDR}">${fmt(r.tPri)}</td>
+    <td style="${TDR}">${r.tInt?fmt(r.tInt):''}</td>
+  </tr>`).join('');
+
+  const makeFoot = rows => {
+    const sp=rows.reduce((s,r)=>s+r.tPri,0), si=rows.reduce((s,r)=>s+r.tInt,0);
+    const mp=rows.reduce((s,r)=>s+(r.mPri||0),0), mi=rows.reduce((s,r)=>s+(r.mInt||0),0);
+    const dp=rows.reduce((s,r)=>s+r.pri,0), di=rows.reduce((s,r)=>s+r.int,0);
+    return `<tfoot><tr>
+      <td colspan="2" style="${FTC}background:#f7f7f7;">합계</td>
+      <td style="${FT}background:#f7f7f7;">${fmt(dp)}</td><td style="${FT}background:#f7f7f7;">${fmt(di)}</td>
+      <td style="${FT}background:#f7f7f7;">${mp?fmt(mp):''}</td><td style="${FT}background:#f7f7f7;">${mi?fmt(mi):''}</td>
+      <td style="${FT}background:#f7f7f7;">${fmt(sp)}</td><td style="${FT}background:#f7f7f7;">${si?fmt(si):''}</td>
+    </tr><tr>
+      <td colspan="2" style="${FTC}background:#eee;">총계</td>
+      <td colspan="2" style="${FT}background:#eee;">${fmt(dp+di)}</td>
+      <td colspan="2" style="${FT}background:#eee;">${fmt(mp+mi)}</td>
+      <td colspan="2" style="${FT}background:#eee;">${fmt(sp+si)}</td>
+    </tr></tfoot>`;
+  };
+
+  const makeTable = (rows, showM) => `<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:6px;">
+    ${makeHdr()}<tbody>${makeRows(rows,showM)}</tbody>${makeFoot(rows)}</table>`;
+
+  const makeBasicMain = () => {
+    const BH2='border:1px solid #333;padding:6px;text-align:center;background:#f2f2f2;font-weight:600;font-size:11px;';
+    const BV2='border:1px solid #333;padding:6px;text-align:right;font-size:11px;';
+    const SPC='border:none;padding:0;width:2%;';
+    const BLR='border-left:none;border-right:none;border-top:1px solid #333;border-bottom:1px solid #333;padding:0;height:4px;';
+    const colg=`<colgroup><col style="width:20%"><col style="width:15%"><col style="width:3%">
+      <col style="width:13%"><col style="width:12%"><col style="width:3%">
+      <col style="width:18%"><col style="width:16%"></colgroup>`;
+    const hdr=`<div style="display:flex;justify-content:space-between;margin:6px 0 5px;">
+    <span style="font-size:12px;font-weight:700;">1. 기초사항</span>
+    <span style="font-size:10px;">(단위: 원)</span></div>`;
+    const wrap=inner=>`<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:6px;table-layout:fixed;">${colg}<tbody>${inner}</tbody></table>`;
+    if(rp.hasExternalCommittee){
+      return hdr+wrap(`
+        <tr><td style="${BH2}">③ 월평균 가용소득</td><td style="${BV2}">${fmt(data.monthlyAvailable)}</td>
+          <td style="${SPC}"></td><td style="${BH2}">④ 월 회생위원 보수</td><td style="${BV2}">${fmt(monthlyFee)}</td>
+          <td style="${BN}" colspan="3"></td></tr>
+        <tr style="height:4px;"><td style="${BLR}" colspan="2"></td><td style="${BN}"></td>
+          <td style="${BN}" colspan="2"></td><td style="${BN}" colspan="3"></td></tr>
+        <tr><td style="${BH2}">(A) 월 실제가용소득(③-④)</td><td style="${BV2}">${fmt(actualM)}</td>
+          <td style="${SPC}"></td><td style="${BH2}">(B) 변제횟수</td><td style="${BV2}">${M}회</td>
+          <td style="${SPC}"></td><td style="${BH2}">(C) 총 실제가용소득</td><td style="${BV2}">${fmt(actualM*M)}</td></tr>`);
+    }
+    return hdr+wrap(`<tr>
+      <td style="${BH2}">(A) 월 실제가용소득</td><td style="${BV2}">${fmt(actualM)}</td>
+      <td style="${BN}"></td><td style="${BH2}">(B) 변제횟수</td><td style="${BV2}">${M}회</td>
+      <td style="${BN}"></td><td style="${BH2}">(C) 총 가용소득</td><td style="${BV2}">${fmt(actualM*M)}</td>
+    </tr>`);
+  };
+
+  // 별표1 (원금 상환, 1~K-1회)
+  const bt1 = allCreds.map(cr => {
+    const pri=getPri(cr), int=getInt(cr);
+    const mPri = totalPri>0 ? Math.round(pri/totalPri*actualM) : 0;
+    return {id:cr.id, cr, pri, int, mPri, mInt:0, tPri:mPri*p1Months, tInt:0};
+  });
+
+  // 별표2 (원금+이자 상환, K회)
+  const bt2 = allCreds.map(cr => {
+    const b1=bt1.find(r=>r.id===cr.id);
+    const pri=getPri(cr), int=getInt(cr);
+    const mPri = Math.max(0, pri-(b1?.tPri||0));  // 원금 잔여
+    const mInt = totalInt>0&&int>0 ? Math.round(int/totalInt*intAvail2) : 0;
+    return {id:cr.id, cr, pri, int, mPri, mInt, tPri:mPri, tInt:mInt};
+  });
+
+  // 별표3 (이자 상환, K+1~M-1회)
+  const bt3 = allCreds.map(cr => {
+    const b2=bt2.find(r=>r.id===cr.id);
+    const pri=getPri(cr), int=getInt(cr);
+    const mInt = totalInt>0&&int>0 ? Math.round(int/totalInt*actualM) : 0;
+    return {id:cr.id, cr, pri, int, mPri:0, mInt, tPri:0, tInt:mInt*p3Months};
+  });
+
+  // 별표4 (마지막 회 이자 잔여 - M회)
+  const bt4 = allCreds.map(cr => {
+    const b2=bt2.find(r=>r.id===cr.id);
+    const b3=bt3.find(r=>r.id===cr.id);
+    const pri=getPri(cr), int=getInt(cr);
+    const tInt = Math.max(0, int-(b2?.tInt||0)-(b3?.tInt||0));
+    return {id:cr.id, cr, pri, int, mPri:0, mInt:tInt, tPri:0, tInt};
+  });
+
+  // 별표5 (총합)
+  const bt5 = allCreds.map(cr => {
+    const b1=bt1.find(r=>r.id===cr.id);
+    const b2=bt2.find(r=>r.id===cr.id);
+    const b3=bt3.find(r=>r.id===cr.id);
+    const b4=bt4.find(r=>r.id===cr.id);
+    const pri=getPri(cr), int=getInt(cr);
+    const tPri=(b1?.tPri||0)+(b2?.tPri||0);
+    const tInt=(b2?.tInt||0)+(b3?.tInt||0)+(b4?.tInt||0);
+    return {id:cr.id, cr, pri, int, mPri:null, mInt:null, tPri, tInt};
+  });
+
+  const totalRepay = bt5.reduce((s,r)=>s+r.tPri+r.tInt,0);
+  const rv=0.05/12, rn=M, rm=Math.max(0,rn-3);
+  const lei=rm>0?3+(1-Math.pow(1+rv,-rm))/rv:rn;
+  const pv=Math.round(actualM*lei);
+
+  const css=`<style>
+    body{font-family:'Malgun Gothic','맑은 고딕',sans-serif;font-size:12px;padding:12px;}
+    h1{text-align:center;font-size:17px;margin:0 0 12px;letter-spacing:2px;}
+    @media print{body{padding:10px;}.pb{page-break-after:always;}}
+  </style>`;
+
+  const liquidTable=()=>`<div style="margin:12px 0 0;"><span style="font-size:12px;font-weight:700;">4. 청산가치와의 비교</span></div>
+  <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:5px;table-layout:fixed;">
+    <thead><tr><td colspan="3" style="${BN}"></td>
+      <td colspan="2" style="${BN}padding:2px 0;text-align:right;font-size:9.5px;color:#555;">(단위: 원)</td>
+      <td style="${BN}"></td></tr></thead>
+    <tbody>
+      <tr>
+        <td style="border:1px solid #333;padding:6px;text-align:center;background:#f2f2f2;font-weight:600;height:38px;vertical-align:middle;" rowspan="2">(J) 청산가치</td>
+        <td style="border:1px solid #333;padding:6px;text-align:right;" rowspan="2">${fmt(liquidation)}</td>
+        <td style="${BN}" rowspan="2"></td>
+        <td style="border:1px solid #333;padding:6px;text-align:center;background:#f2f2f2;font-weight:600;height:38px;vertical-align:middle;">(K) 총 변제예정(유보)액</td>
+        <td style="border:1px solid #333;padding:6px;text-align:right;">${fmt(totalRepay)}</td>
+        <td style="border-left:1px solid #333;border-top:none;border-bottom:none;border-right:none;padding:0;"></td>
+      </tr><tr>
+        <td style="border:1px solid #333;padding:6px;text-align:center;background:#f2f2f2;font-weight:600;height:38px;vertical-align:middle;">(L) 현재가치</td>
+        <td style="border:1px solid #333;padding:6px;text-align:right;">${fmt(pv)}</td>
+        <td style="border-left:1px solid #333;border-top:none;border-bottom:none;border-right:none;padding:0;"></td>
+      </tr>
+    </tbody>
+  </table>`;
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">${css}</head><body>
+<h1>개인회생채권 변제예정액 표</h1>
+${makeBasicMain()}
+<div style="display:flex;justify-content:space-between;margin:14px 0 6px;">
+  <span style="font-size:13px;font-weight:700;">2. 채권자별 변제예정액의 산정내역</span>
+</div>
+<div style="margin-left:14px;font-size:12px;line-height:2;">
+  <div>가. 제1회부터 제${p1Months}회까지 &nbsp;원금 상환 월 변제예정(유보)액 산정내역</div>
+  <div style="margin-left:24px;">(별표1)과 같음.</div>
+  <div>나. 제${K}회 &nbsp;원금+이자 상환 월 변제예정(유보)액 산정내역</div>
+  <div style="margin-left:24px;">(별표2)와 같음.</div>
+  <div>다. 제${K+1}회부터 제${M-1}회까지 &nbsp;이자 상환 월 변제예정(유보)액 산정내역</div>
+  <div style="margin-left:24px;">(별표3)과 같음.</div>
+  <div>라. 제${M}회 &nbsp;이자 상환 월 변제예정(유보)액 산정내역</div>
+  <div style="margin-left:24px;">(별표4)와 같음.</div>
+  <div>마. 총 변제예정(유보)액</div>
+  <div style="margin-left:24px;">(별표5)와 같음.</div>
+</div>
+<div style="margin:12px 0 5px;font-size:13px;">
+  <span style="font-weight:700;">3. 변제율</span>
+  <span style="margin-left:14px;letter-spacing:0.5px;"><b>[원리금]</b> 기준 &nbsp;&nbsp; <b>${data.repayRate.toFixed(2)}%</b> &nbsp;상당액</span>
+</div>
+${liquidTable()}
+<div class="pb"></div>
+
+<div style="font-size:13px;font-weight:700;margin:0 0 6px;">(별표1) 제1회부터 제${p1Months}회까지 원금 상환 월 변제예정(유보)액</div>
+<div style="font-size:12px;font-weight:600;margin:4px 0;">채권자별 변제예정(유보)액의 산정내역</div>
+${makeTable(bt1,true)}
+<div class="pb"></div>
+
+<div style="font-size:13px;font-weight:700;margin:0 0 6px;">(별표2) 제${K}회 원금+이자 상환 월 변제예정(유보)액</div>
+<div style="font-size:12px;font-weight:600;margin:4px 0;">채권자별 변제예정(유보)액의 산정내역</div>
+${makeTable(bt2,true)}
+<div class="pb"></div>
+
+<div style="font-size:13px;font-weight:700;margin:0 0 6px;">(별표3) 제${K+1}회부터 제${M-1}회까지 이자 상환 월 변제예정(유보)액</div>
+<div style="font-size:12px;font-weight:600;margin:4px 0;">채권자별 변제예정(유보)액의 산정내역</div>
+${makeTable(bt3,true)}
+<div class="pb"></div>
+
+<div style="font-size:13px;font-weight:700;margin:0 0 6px;">(별표4) 제${M}회 이자 상환 월 변제예정(유보)액</div>
+<div style="font-size:12px;font-weight:600;margin:4px 0;">채권자별 변제예정(유보)액의 산정내역</div>
+${makeTable(bt4,true)}
+<div class="pb"></div>
+
+<div style="font-size:13px;font-weight:700;margin:0 0 6px;">(별표5) 총 변제예정(유보)액</div>
+<div style="font-size:12px;font-weight:600;margin:4px 0;">채권자별 총 변제예정(유보)액</div>
+${makeTable(bt5,false)}
+
+<script>window.onload=function(){setTimeout(function(){window.print();},200);};<\/script>
+</body></html>`;
+
+  return openPrintWindow(html, returnOnly);
+}
+
+
+function printRepaymentSchedule100(returnOnly=false){
+  const data = computeRepaymentSchedule();
+  const liquidation = getLiquidationValueForPlan();
+  const rp = state.repaymentPlan;
+  const baseMethod = rp.method === 'principalInterest100' ? '원리금' : '원금';
+  const credNums = computeDisplayNumbers();
+
+  // 실제 가용소득
+  const feeRate    = Number(rp.committeeFeeRate) || 0;
+  const monthlyFee = rp.hasExternalCommittee ? Math.round(data.monthlyAvailable * feeRate / 100) : 0;
+  const actualM    = Math.max(0, data.monthlyAvailable - monthlyFee);
+  const totalMonths= Number(data.months) || 36;
+
+  // 금액 헬퍼
+  const isFut  = cr => cr.natureType === '장래구상채권';
+  const getConf= cr => {
+    if(isFut(cr)||cr.hasAttachment) return 0;
+    return Number(cr.principal)||0;
+  };
+  const getUnconf= cr => {
+    if(isFut(cr)||!cr.hasAttachment||!cr.attachmentType1) return 0;
+    const tot=(Number(cr.principal)||0)+(Number(cr.interest)||0);
+    return Math.max(0, tot-(Number(cr.attachmentType1.amount)||0));
+  };
+
+  const allCreds = state.creditors.filter(c => c.name);
+  const totalDebt = allCreds.reduce((s,c)=>s+getConf(c)+getUnconf(c),0);
+
+  // 페이즈 계산
+  const K = (totalDebt>0&&actualM>0) ? Math.ceil(totalDebt/actualM) : totalMonths;
+  const p1Months = Math.max(0, K-1);
+  const p1Total  = p1Months * actualM;
+  const p2Total  = totalDebt - p1Total; // 마지막 회차 잔여
+
+  // 별표1 rows (1~K-1회, 동일 월납)
+  const bt1 = allCreds.map(cr => {
+    const conf=getConf(cr), unconf=getUnconf(cr), tot=conf+unconf;
+    const mConf   = (totalDebt>0&&conf>0)   ? Math.round(conf/totalDebt*actualM)   : 0;
+    const mUnconf = (totalDebt>0&&unconf>0)  ? Math.round(unconf/totalDebt*actualM) : 0;
+    return {id:cr.id, cr, conf, unconf,
+            mConf, mUnconf, tConf:mConf*p1Months, tUnconf:mUnconf*p1Months};
+  });
+
+  // 별표2 rows (K회, 잔여)
+  const bt2 = allCreds.map(cr => {
+    const b1=bt1.find(r=>r.id===cr.id);
+    const conf=getConf(cr), unconf=getUnconf(cr);
+    const tC=Math.max(0, conf-(b1?.tConf||0));
+    const tU=Math.max(0, unconf-(b1?.tUnconf||0));
+    return {id:cr.id, cr, conf, unconf,
+            mConf:tC, mUnconf:tU, tConf:tC, tUnconf:tU};
+  });
+
+  // 별표3 rows (전체 합산, 월 공란)
+  const bt3 = allCreds.map(cr => {
+    const b1=bt1.find(r=>r.id===cr.id), b2=bt2.find(r=>r.id===cr.id);
+    return {id:cr.id, cr, conf:getConf(cr), unconf:getUnconf(cr),
+            mConf:null, mUnconf:null,
+            tConf:(b1?.tConf||0)+(b2?.tConf||0),
+            tUnconf:(b1?.tUnconf||0)+(b2?.tUnconf||0)};
+  });
+
+  // 현재가치
+  const rv=0.05/12, rn=totalMonths, rm=Math.max(0,rn-3);
+  const lei=rm>0?3+(1-Math.pow(1+rv,-rm))/rv:rn;
+  const pv =Math.round(actualM*lei);
+  const totalRepay3=bt3.reduce((s,r)=>s+r.tConf+r.tUnconf,0);
+
+  const fmt = n => n!=null?n.toLocaleString('ko-KR'):'';
+
+  // 스타일
+  const TH  = 'border:1px solid #333;padding:5px 7px;text-align:center;background:#f2f2f2;font-weight:600;font-size:11px;';
+  const TH2 = 'border:1px solid #333;padding:4px 6px;text-align:center;background:#f2f2f2;font-weight:500;font-size:10px;';
+  const TDC = 'border:1px solid #333;padding:4px 7px;text-align:center;height:30px;vertical-align:middle;font-size:11px;';
+  const TDL = 'border:1px solid #333;padding:4px 7px;text-align:left;height:30px;vertical-align:middle;font-size:11px;';
+  const TDR = 'border:1px solid #333;padding:4px 7px;text-align:right;height:30px;vertical-align:middle;font-size:11px;';
+  const FT  = 'border:1px solid #333;padding:5px 7px;text-align:right;font-weight:bold;font-size:11px;';
+  const FTC = 'border:1px solid #333;padding:5px 7px;text-align:center;font-weight:bold;font-size:11px;';
+  const BN  = 'border:none;padding:0;';
+
+  const makeHeader100 = () => `<thead>
+    <tr>
+      <th style="${TH}width:6%;" rowspan="2">채권<br>번호</th>
+      <th style="${TH}width:18%;" rowspan="2">채권자</th>
+      <th style="${TH}" colspan="2">(D) 개인회생채권액</th>
+      <th style="${TH}" colspan="2">(E) 월 변제예정(유보)액</th>
+      <th style="${TH}" colspan="2">(F) 총 변제예정(유보)액</th>
+    </tr>
+    <tr>
+      <th style="${TH2}">확정채권액<br>[${baseMethod}]</th>
+      <th style="${TH2}">미확정채권액<br>[${baseMethod}]</th>
+      <th style="${TH2}">확정채권액<br>[${baseMethod}]</th>
+      <th style="${TH2}">미확정채권액<br>[${baseMethod}]</th>
+      <th style="${TH2}">확정채권액<br>[${baseMethod}]</th>
+      <th style="${TH2}">미확정채권액<br>[${baseMethod}]</th>
+    </tr></thead>`;
+
+  const makeRows100 = (rows, showM) => rows.map(r => `<tr>
+    <td style="${TDC}">${credNums[r.id]||''}</td>
+    <td style="${TDL}">${escapeHtml(r.cr.name)}</td>
+    <td style="${TDR}">${isFut(r.cr)?'미발생':fmt(r.conf)}</td>
+    <td style="${TDR}">${r.unconf?fmt(r.unconf):''}</td>
+    <td style="${TDR}">${showM&&r.mConf!=null?fmt(r.mConf):''}</td>
+    <td style="${TDR}">${showM&&r.mUnconf!=null&&r.mUnconf?fmt(r.mUnconf):''}</td>
+    <td style="${TDR}">${fmt(r.tConf)}</td>
+    <td style="${TDR}">${r.tUnconf?fmt(r.tUnconf):''}</td>
+  </tr>`).join('');
+
+  const makeFoot100 = (rows) => {
+    const sc=rows.reduce((s,r)=>s+r.tConf,0),  su=rows.reduce((s,r)=>s+r.tUnconf,0);
+    const mc=rows.reduce((s,r)=>s+(r.mConf||0),0), mu=rows.reduce((s,r)=>s+(r.mUnconf||0),0);
+    const dc=rows.reduce((s,r)=>s+r.conf,0),   du=rows.reduce((s,r)=>s+r.unconf,0);
+    return `<tfoot>
+    <tr>
+      <td colspan="2" style="${FTC}background:#f7f7f7;">합계</td>
+      <td style="${FT}background:#f7f7f7;">${fmt(dc)}</td>
+      <td style="${FT}background:#f7f7f7;">${du?fmt(du):''}</td>
+      <td style="${FT}background:#f7f7f7;">${mc?fmt(mc):''}</td>
+      <td style="${FT}background:#f7f7f7;">${mu?fmt(mu):''}</td>
+      <td style="${FT}background:#f7f7f7;">${fmt(sc)}</td>
+      <td style="${FT}background:#f7f7f7;">${su?fmt(su):''}</td>
+    </tr>
+    <tr>
+      <td colspan="2" style="${FTC}background:#eee;">총계</td>
+      <td colspan="2" style="${FT}background:#eee;">${fmt(dc+du)}</td>
+      <td colspan="2" style="${FT}background:#eee;">${mc+mu?fmt(mc+mu):''}</td>
+      <td colspan="2" style="${FT}background:#eee;">${fmt(sc+su)}</td>
+    </tr></tfoot>`;
+  };
+
+  const makeTable100 = (rows, showM) => `<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:6px;">
+    ${makeHeader100()}
+    <tbody>${makeRows100(rows,showM)}</tbody>
+    ${makeFoot100(rows)}
+  </table>`;
+
+  const makeBasic100 = (monthly, months, total, isMain=false) => {
+    const BH2='border:1px solid #333;padding:6px;text-align:center;background:#f2f2f2;font-weight:600;font-size:11px;';
+    const BV2='border:1px solid #333;padding:6px;text-align:right;font-size:11px;';
+    const SPC='border:none;padding:0;width:2%;';
+    const BLR='border-left:none;border-right:none;border-top:1px solid #333;border-bottom:1px solid #333;padding:0;height:4px;';
+    const colg=`<colgroup><col style="width:20%"><col style="width:15%"><col style="width:3%">
+      <col style="width:13%"><col style="width:12%"><col style="width:3%">
+      <col style="width:18%"><col style="width:16%"></colgroup>`;
+    const hdr=`<div style="display:flex;justify-content:space-between;margin:6px 0 5px;">
+    <span style="font-size:12px;font-weight:700;">1. 기초사항</span>
+    <span style="font-size:10px;">(단위: 원)</span>
+  </div>`;
+    const wrap=inner=>`<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:6px;table-layout:fixed;">${colg}<tbody>${inner}</tbody></table>`;
+    if(rp.hasExternalCommittee && isMain){
+      return hdr+wrap(`
+        <tr><td style="${BH2}">③ 월평균 가용소득</td><td style="${BV2}">${fmt(data.monthlyAvailable)}</td>
+          <td style="${SPC}"></td><td style="${BH2}">④ 월 회생위원 보수</td><td style="${BV2}">${fmt(monthlyFee)}</td>
+          <td style="${BN}" colspan="3"></td></tr>
+        <tr style="height:4px;"><td style="${BLR}" colspan="2"></td><td style="${BN}"></td>
+          <td style="${BN}" colspan="2"></td><td style="${BN}" colspan="3"></td></tr>
+        <tr><td style="${BH2}">(A) 월 실제가용소득<br>(③-④)</td><td style="${BV2}">${fmt(monthly)}</td>
+          <td style="${SPC}"></td><td style="${BH2}">(B) 변제횟수</td><td style="${BV2}">${months}회</td>
+          <td style="${SPC}"></td><td style="${BH2}">(C) 총 실제가용소득</td><td style="${BV2}">${fmt(total)}</td></tr>`);
+    }
+    return hdr+wrap(`<tr>
+      <td style="${BH2}">(A) 월 실제가용소득</td><td style="${BV2}">${fmt(monthly)}</td>
+      <td style="${BN}"></td><td style="${BH2}">(B) 변제횟수</td><td style="${BV2}">${months}회</td>
+      <td style="${BN}"></td><td style="${BH2}">(C) 총 가용소득</td><td style="${BV2}">${fmt(total)}</td>
+    </tr>`);
+  };
+
+  const css=`<style>
+    body{font-family:'Malgun Gothic','맑은 고딕',sans-serif;font-size:12px;padding:12px;}
+    h1{text-align:center;font-size:17px;margin:0 0 12px;letter-spacing:2px;}
+    @media print{body{padding:10px;} .pb{page-break-after:always;}}
+  </style>`;
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">${css}</head><body>
+<h1>개인회생채권 변제예정액 표</h1>
+
+${makeBasic100(actualM,totalMonths,actualM*totalMonths,true)}
+
+<div style="display:flex;justify-content:space-between;margin:14px 0 6px;">
+  <span style="font-size:13px;font-weight:700;">2. 채권자별 변제예정액의 산정내역</span>
+</div>
+<div style="margin-left:14px;font-size:12px;line-height:2;">
+  <div>가. 제1회부터 제${p1Months}회까지 월 변제예정(유보)액 산정내역</div>
+  <div style="margin-left:24px;">(별표1)과 같음.</div>
+  <div>나. 제${K}회 월 변제예정(유보)액 산정내역</div>
+  <div style="margin-left:24px;">(별표2)와 같음.</div>
+  <div>다. 총 변제예정(유보)액</div>
+  <div style="margin-left:24px;">(별표3)과 같음.</div>
+</div>
+
+<div style="margin:12px 0 5px;font-size:13px;">
+  <span style="font-weight:700;">3. 변제율</span>
+  <span style="margin-left:14px;letter-spacing:0.5px;"><b>[${baseMethod}]</b> 기준 &nbsp;&nbsp; <b>${data.repayRate.toFixed(2)}%</b> &nbsp;상당액</span>
+</div>
+
+<div style="margin:12px 0 0;"><span style="font-size:12px;font-weight:700;">4. 청산가치와의 비교</span></div>
+<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:5px;table-layout:fixed;">
+  <thead><tr><td colspan="3" style="border:none;padding:0;"></td>
+    <td colspan="2" style="border:none;padding:2px 0;text-align:right;font-size:9.5px;color:#555;">(단위: 원)</td>
+    <td style="border:none;padding:0;"></td></tr></thead>
+  <tbody>
+    <tr>
+      <td style="border:1px solid #333;padding:6px;text-align:center;background:#f2f2f2;font-weight:600;height:38px;vertical-align:middle;" rowspan="2">(J) 청산가치</td>
+      <td style="border:1px solid #333;padding:6px;text-align:right;" rowspan="2">${fmt(liquidation)}</td>
+      <td style="border:none;padding:0;" rowspan="2"></td>
+      <td style="border:1px solid #333;padding:6px;text-align:center;background:#f2f2f2;font-weight:600;height:38px;vertical-align:middle;">(K) 총 변제예정(유보)액</td>
+      <td style="border:1px solid #333;padding:6px;text-align:right;">${fmt(totalRepay3)}</td>
+      <td style="border-left:1px solid #333;border-top:none;border-bottom:none;border-right:none;padding:0;"></td>
+    </tr>
+    <tr>
+      <td style="border:1px solid #333;padding:6px;text-align:center;background:#f2f2f2;font-weight:600;height:38px;vertical-align:middle;">(L) 현재가치</td>
+      <td style="border:1px solid #333;padding:6px;text-align:right;">${fmt(pv)}</td>
+      <td style="border-left:1px solid #333;border-top:none;border-bottom:none;border-right:none;padding:0;"></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="pb"></div>
+
+<div style="font-size:13px;font-weight:700;margin:0 0 6px;">(별표1) 제1회부터 제${p1Months}회까지 월 변제예정(유보)액 산정내역</div>
+<div style="font-size:12px;font-weight:600;margin:6px 0 4px;">2. 채권자별 변제예정(유보)액의 산정내역</div>
+${makeTable100(bt1,true)}
+
+<div class="pb"></div>
+
+<div style="font-size:13px;font-weight:700;margin:0 0 6px;">(별표2) 제${K}회 월 변제예정(유보)액 산정내역</div>
+<div style="font-size:12px;font-weight:600;margin:6px 0 4px;">2. 채권자별 변제예정(유보)액의 산정내역</div>
+${makeTable100(bt2,true)}
+
+<div class="pb"></div>
+
+<div style="font-size:13px;font-weight:700;margin:0 0 6px;">(별표3) 총 변제예정(유보)액</div>
+<div style="font-size:12px;font-weight:600;margin:6px 0 4px;">채권자별 총 변제예정(유보)액</div>
+${makeTable100(bt3,false)}
+
+<script>window.onload=function(){setTimeout(function(){window.print();},200);};<\/script>
+</body></html>`;
+
+  return openPrintWindow(html, returnOnly);
+}
+
+
+
+function printRepaymentSchedulePriority100(returnOnly=false){
+  const data = computeRepaymentSchedule();
+  const liquidation = getLiquidationValueForPlan();
+  const rp = state.repaymentPlan;
+  const baseMethod = rp.method === 'principalInterest100' ? '원리금' : '원금';
+  const credNums = computeDisplayNumbers();
+
+  const feeRate    = Number(rp.committeeFeeRate) || 0;
+  const monthlyFee = rp.hasExternalCommittee ? Math.round(data.monthlyAvailable * feeRate / 100) : 0;
+  const actualM    = Math.max(0, data.monthlyAvailable - monthlyFee);
+
+  const isFut   = cr => cr.natureType === '장래구상채권';
+  const getConf = cr => (isFut(cr)||cr.hasAttachment) ? 0 : (Number(cr.principal)||0);
+  const getUnconf= cr => {
+    if(isFut(cr)||!cr.hasAttachment||!cr.attachmentType1) return 0;
+    return Math.max(0,(Number(cr.principal)||0)+(Number(cr.interest)||0)-(Number(cr.attachmentType1.amount)||0));
+  };
+  const getAmt = cr => isFut(cr) ? 0 : (Number(cr.principal)||0)+(Number(cr.interest)||0);
+
+  const priCreds = state.creditors.filter(c => c.claimType==='우선' && c.name);
+  const genCreds = state.creditors.filter(c => c.claimType!=='우선' && c.name);
+  const totalPri = priCreds.reduce((s,c)=>s+getAmt(c),0);
+  const totalGen = genCreds.reduce((s,c)=>s+getConf(c)+getUnconf(c),0);
+
+  // 우선채권 페이즈
+  const K  = (totalPri>0&&actualM>0) ? Math.ceil(totalPri/actualM) : 1;
+  const p1Months = Math.max(0, K-1);
+  const priRem   = totalPri - p1Months*actualM;
+  const genAvail2= Math.max(0, actualM - priRem);
+
+  // 일반채권 페이즈
+  const genAfterP2 = Math.max(0, totalGen - genAvail2);
+  const M_extra    = (genAfterP2>0&&actualM>0) ? Math.ceil(genAfterP2/actualM) : 0;
+  const M          = K + M_extra;            // 마지막 변제회
+  const p3Months   = Math.max(0, M_extra-1); // K+1 ~ M-1
+  const genRem     = genAfterP2 - p3Months*actualM; // 마지막 회 일반채권 잔여
+
+  const fmt = n => n!=null ? n.toLocaleString('ko-KR') : '';
+
+  // 스타일 상수
+  const TH ='border:1px solid #333;padding:5px 7px;text-align:center;background:#f2f2f2;font-weight:600;font-size:11px;';
+  const TH2='border:1px solid #333;padding:4px 6px;text-align:center;background:#f2f2f2;font-weight:500;font-size:10px;';
+  const TDC='border:1px solid #333;padding:4px 7px;text-align:center;height:30px;vertical-align:middle;font-size:11px;';
+  const TDL='border:1px solid #333;padding:4px 7px;text-align:left;height:30px;vertical-align:middle;font-size:11px;';
+  const TDR='border:1px solid #333;padding:4px 7px;text-align:right;height:30px;vertical-align:middle;font-size:11px;';
+  const FT ='border:1px solid #333;padding:5px 7px;text-align:right;font-weight:bold;font-size:11px;';
+  const FTC='border:1px solid #333;padding:5px 7px;text-align:center;font-weight:bold;font-size:11px;';
+  const BN ='border:none;padding:0;';
+
+  const makeHdr = () => `<thead><tr>
+    <th style="${TH}width:6%;" rowspan="2">채권번호</th>
+    <th style="${TH}width:18%;" rowspan="2">채권자</th>
+    <th style="${TH}" colspan="2">(D) 개인회생채권액</th>
+    <th style="${TH}" colspan="2">(E) 월 변제예정(유보)액</th>
+    <th style="${TH}" colspan="2">(F) 총 변제예정(유보)액</th>
+  </tr><tr>
+    <th style="${TH2}">확정채권액<br>[${baseMethod}]</th>
+    <th style="${TH2}">미확정채권액<br>[${baseMethod}]</th>
+    <th style="${TH2}">확정채권액<br>[${baseMethod}]</th>
+    <th style="${TH2}">미확정채권액<br>[${baseMethod}]</th>
+    <th style="${TH2}">확정채권액<br>[${baseMethod}]</th>
+    <th style="${TH2}">미확정채권액<br>[${baseMethod}]</th>
+  </tr></thead>`;
+
+  const makeRows = (rows, showM) => rows.map(r=>`<tr>
+    <td style="${TDC}">${credNums[r.id]||''}</td>
+    <td style="${TDL}">${escapeHtml(r.cr.name)}</td>
+    <td style="${TDR}">${isFut(r.cr)?'미발생':fmt(r.conf)}</td>
+    <td style="${TDR}">${r.unconf?fmt(r.unconf):''}</td>
+    <td style="${TDR}">${showM&&r.mC!=null?fmt(r.mC):''}</td>
+    <td style="${TDR}">${showM&&r.mU?fmt(r.mU):''}</td>
+    <td style="${TDR}">${fmt(r.tC)}</td>
+    <td style="${TDR}">${r.tU?fmt(r.tU):''}</td>
+  </tr>`).join('');
+
+  const makeFoot = rows => {
+    const sc=rows.reduce((s,r)=>s+r.tC,0), su=rows.reduce((s,r)=>s+r.tU,0);
+    const mc=rows.reduce((s,r)=>s+(r.mC||0),0),mu=rows.reduce((s,r)=>s+(r.mU||0),0);
+    const dc=rows.reduce((s,r)=>s+r.conf,0), du=rows.reduce((s,r)=>s+r.unconf,0);
+    return `<tfoot><tr>
+      <td colspan="2" style="${FTC}background:#f7f7f7;">합계</td>
+      <td style="${FT}background:#f7f7f7;">${fmt(dc)}</td><td style="${FT}background:#f7f7f7;">${du?fmt(du):''}</td>
+      <td style="${FT}background:#f7f7f7;">${mc?fmt(mc):''}</td><td style="${FT}background:#f7f7f7;">${mu?fmt(mu):''}</td>
+      <td style="${FT}background:#f7f7f7;">${fmt(sc)}</td><td style="${FT}background:#f7f7f7;">${su?fmt(su):''}</td>
+    </tr><tr>
+      <td colspan="2" style="${FTC}background:#eee;">총계</td>
+      <td colspan="2" style="${FT}background:#eee;">${fmt(dc+du)}</td>
+      <td colspan="2" style="${FT}background:#eee;">${mc+mu?fmt(mc+mu):''}</td>
+      <td colspan="2" style="${FT}background:#eee;">${fmt(sc+su)}</td>
+    </tr></tfoot>`;
+  };
+
+  const makeTable = (rows, showM) => `<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:6px;">
+    ${makeHdr()}<tbody>${makeRows(rows,showM)}</tbody>${makeFoot(rows)}</table>`;
+
+  const makeBasicMain = () => {
+    const BH2='border:1px solid #333;padding:6px;text-align:center;background:#f2f2f2;font-weight:600;font-size:11px;';
+    const BV2='border:1px solid #333;padding:6px;text-align:right;font-size:11px;';
+    const SPC='border:none;padding:0;width:2%;';
+    const BLR='border-left:none;border-right:none;border-top:1px solid #333;border-bottom:1px solid #333;padding:0;height:4px;';
+    const colg=`<colgroup><col style="width:20%"><col style="width:15%"><col style="width:3%">
+      <col style="width:13%"><col style="width:12%"><col style="width:3%">
+      <col style="width:18%"><col style="width:16%"></colgroup>`;
+    const hdr=`<div style="display:flex;justify-content:space-between;margin:6px 0 5px;">
+    <span style="font-size:12px;font-weight:700;">1. 기초사항</span>
+    <span style="font-size:10px;">(단위: 원)</span></div>`;
+    const wrap=inner=>`<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:6px;table-layout:fixed;">${colg}<tbody>${inner}</tbody></table>`;
+    if(rp.hasExternalCommittee){
+      return hdr+wrap(`
+        <tr><td style="${BH2}">③ 월평균 가용소득</td><td style="${BV2}">${fmt(data.monthlyAvailable)}</td>
+          <td style="${SPC}"></td><td style="${BH2}">④ 월 회생위원 보수</td><td style="${BV2}">${fmt(monthlyFee)}</td>
+          <td style="${BN}" colspan="3"></td></tr>
+        <tr style="height:4px;"><td style="${BLR}" colspan="2"></td><td style="${BN}"></td>
+          <td style="${BN}" colspan="2"></td><td style="${BN}" colspan="3"></td></tr>
+        <tr><td style="${BH2}">(A) 월 실제가용소득<br>(③-④)</td><td style="${BV2}">${fmt(actualM)}</td>
+          <td style="${SPC}"></td><td style="${BH2}">(B) 변제횟수</td><td style="${BV2}">${M}회</td>
+          <td style="${SPC}"></td><td style="${BH2}">(C) 총 실제가용소득</td><td style="${BV2}">${fmt(actualM*M)}</td></tr>`);
+    }
+    return hdr+wrap(`<tr>
+      <td style="${BH2}">(A) 월 실제가용소득</td><td style="${BV2}">${fmt(actualM)}</td>
+      <td style="${BN}"></td><td style="${BH2}">(B) 변제횟수</td><td style="${BV2}">${M}회</td>
+      <td style="${BN}"></td><td style="${BH2}">(C) 총 가용소득</td><td style="${BV2}">${fmt(actualM*M)}</td>
+    </tr>`);
+  };
+
+  // 별표1 (우선채권, 1~K-1회)
+  const bt1 = priCreds.map(cr => {
+    const amt=getAmt(cr);
+    const mC=totalPri>0?Math.round(amt/totalPri*actualM):0;
+    return {id:cr.id,cr,conf:getConf(cr),unconf:getUnconf(cr),mC,mU:0,tC:mC*p1Months,tU:0};
+  });
+
+  // 별표2 (K회: 우선잔여 + 일반개시)
+  const bt2pri = priCreds.map(cr=>{
+    const b1=bt1.find(r=>r.id===cr.id);
+    const rem=Math.max(0,getAmt(cr)-(b1?.tC||0));
+    return {id:cr.id,cr,conf:getConf(cr),unconf:getUnconf(cr),mC:rem,mU:0,tC:rem,tU:0};
+  });
+  const bt2gen = genCreds.map(cr=>{
+    const c=getConf(cr),u=getUnconf(cr),tot=c+u;
+    const mC=totalGen>0&&c>0?Math.round(c/totalGen*genAvail2):0;
+    const mU=totalGen>0&&u>0?Math.round(u/totalGen*genAvail2):0;
+    return {id:cr.id,cr,conf:c,unconf:u,mC,mU,tC:mC,tU:mU};
+  });
+
+  // 별표3 (일반채권, K+1~M-1회)
+  const bt3 = genCreds.map(cr=>{
+    const c=getConf(cr),u=getUnconf(cr);
+    const mC=totalGen>0&&c>0?Math.round(c/totalGen*actualM):0;
+    const mU=totalGen>0&&u>0?Math.round(u/totalGen*actualM):0;
+    return {id:cr.id,cr,conf:c,unconf:u,mC,mU,tC:mC*p3Months,tU:mU*p3Months};
+  });
+
+  // 별표4 (일반채권, M회 잔여)
+  const bt4 = genCreds.map(cr=>{
+    const b2g=bt2gen.find(r=>r.id===cr.id);
+    const b3 =bt3.find(r=>r.id===cr.id);
+    const c=getConf(cr),u=getUnconf(cr);
+    const tC=Math.max(0,c-(b2g?.tC||0)-(b3?.tC||0));
+    const tU=Math.max(0,u-(b2g?.tU||0)-(b3?.tU||0));
+    return {id:cr.id,cr,conf:c,unconf:u,mC:tC,mU:tU,tC,tU};
+  });
+
+  // 별표5 (전체 합산)
+  const allCreds=[...priCreds,...genCreds];
+  const bt5=allCreds.map(cr=>{
+    const b1=bt1.find(r=>r.id===cr.id);
+    const b2=[...bt2pri,...bt2gen].find(r=>r.id===cr.id);
+    const b3=bt3.find(r=>r.id===cr.id);
+    const b4=bt4.find(r=>r.id===cr.id);
+    const tC=(b1?.tC||0)+(b2?.tC||0)+(b3?.tC||0)+(b4?.tC||0);
+    const tU=(b1?.tU||0)+(b2?.tU||0)+(b3?.tU||0)+(b4?.tU||0);
+    return {id:cr.id,cr,conf:getConf(cr),unconf:getUnconf(cr),mC:null,mU:null,tC,tU};
+  });
+
+  const totalRepay=bt5.reduce((s,r)=>s+r.tC+r.tU,0);
+  const rv=0.05/12,rn=M,rm=Math.max(0,rn-3);
+  const lei=rm>0?3+(1-Math.pow(1+rv,-rm))/rv:rn;
+  const pv=Math.round(actualM*lei);
+
+  const css=`<style>
+    body{font-family:'Malgun Gothic','맑은 고딕',sans-serif;font-size:12px;padding:12px;}
+    h1{text-align:center;font-size:17px;margin:0 0 12px;letter-spacing:2px;}
+    @media print{body{padding:10px;}.pb{page-break-after:always;}}
+  </style>`;
+
+  const liquidTable=()=>`<div style="margin:12px 0 0;"><span style="font-size:12px;font-weight:700;">4. 청산가치와의 비교</span></div>
+  <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:5px;table-layout:fixed;">
+    <thead><tr><td colspan="3" style="${BN}"></td>
+      <td colspan="2" style="${BN}padding:2px 0;text-align:right;font-size:9.5px;color:#555;">(단위: 원)</td>
+      <td style="${BN}"></td></tr></thead>
+    <tbody>
+      <tr>
+        <td style="border:1px solid #333;padding:6px;text-align:center;background:#f2f2f2;font-weight:600;height:38px;vertical-align:middle;" rowspan="2">(J) 청산가치</td>
+        <td style="border:1px solid #333;padding:6px;text-align:right;" rowspan="2">${fmt(liquidation)}</td>
+        <td style="${BN}" rowspan="2"></td>
+        <td style="border:1px solid #333;padding:6px;text-align:center;background:#f2f2f2;font-weight:600;height:38px;vertical-align:middle;">(K) 총 변제예정(유보)액</td>
+        <td style="border:1px solid #333;padding:6px;text-align:right;">${fmt(totalRepay)}</td>
+        <td style="border-left:1px solid #333;border-top:none;border-bottom:none;border-right:none;padding:0;"></td>
+      </tr><tr>
+        <td style="border:1px solid #333;padding:6px;text-align:center;background:#f2f2f2;font-weight:600;height:38px;vertical-align:middle;">(L) 현재가치</td>
+        <td style="border:1px solid #333;padding:6px;text-align:right;">${fmt(pv)}</td>
+        <td style="border-left:1px solid #333;border-top:none;border-bottom:none;border-right:none;padding:0;"></td>
+      </tr>
+    </tbody>
+  </table>`;
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">${css}</head><body>
+<h1>개인회생채권 변제예정액 표</h1>
+${makeBasicMain()}
+<div style="display:flex;justify-content:space-between;margin:14px 0 6px;">
+  <span style="font-size:13px;font-weight:700;">2. 채권자별 변제예정액의 산정내역</span>
+</div>
+<div style="margin-left:14px;font-size:12px;line-height:2;">
+  <div>가. 제1회부터 제${p1Months}회까지 월 변제예정(유보)액 산정내역</div>
+  <div style="margin-left:24px;">(별표1)과 같음.</div>
+  <div>나. 제${K}회 월 변제예정(유보)액 산정내역</div>
+  <div style="margin-left:24px;">(별표2)와 같음.</div>
+  <div>다. 제${K+1}회부터 제${M-1}회까지 월 변제예정(유보)액 산정내역</div>
+  <div style="margin-left:24px;">(별표3)과 같음.</div>
+  <div>라. 제${M}회 월 변제예정(유보)액 산정내역</div>
+  <div style="margin-left:24px;">(별표4)와 같음.</div>
+  <div>마. 총 변제예정(유보)액</div>
+  <div style="margin-left:24px;">(별표5)와 같음.</div>
+</div>
+<div style="margin:12px 0 5px;font-size:13px;">
+  <span style="font-weight:700;">3. 변제율</span>
+  <span style="margin-left:14px;letter-spacing:0.5px;"><b>[${baseMethod}]</b> 기준 &nbsp;&nbsp; <b>${data.repayRate.toFixed(2)}%</b> &nbsp;상당액</span>
+</div>
+${liquidTable()}
+<div class="pb"></div>
+
+<div style="font-size:13px;font-weight:700;margin:0 0 6px;">(별표1) 제1회부터 제${p1Months}회까지 월 변제예정(유보)액 산정내역</div>
+<div style="font-size:12px;font-weight:600;margin:4px 0;">채권자별 변제예정(유보)액의 산정내역</div>
+${makeTable(bt1,true)}
+<div class="pb"></div>
+
+<div style="font-size:13px;font-weight:700;margin:0 0 6px;">(별표2) 제${K}회 월 변제예정(유보)액 산정내역</div>
+<div style="font-size:12px;font-weight:600;margin:4px 0;">채권자별 변제예정(유보)액의 산정내역</div>
+${makeTable([...bt2pri,...bt2gen],true)}
+<div class="pb"></div>
+
+<div style="font-size:13px;font-weight:700;margin:0 0 6px;">(별표3) 제${K+1}회부터 제${M-1}회까지 월 변제예정(유보)액 산정내역</div>
+<div style="font-size:12px;font-weight:600;margin:4px 0;">채권자별 변제예정(유보)액의 산정내역</div>
+${makeTable(bt3,true)}
+<div class="pb"></div>
+
+<div style="font-size:13px;font-weight:700;margin:0 0 6px;">(별표4) 제${M}회 월 변제예정(유보)액 산정내역</div>
+<div style="font-size:12px;font-weight:600;margin:4px 0;">채권자별 변제예정(유보)액의 산정내역</div>
+${makeTable(bt4,true)}
+<div class="pb"></div>
+
+<div style="font-size:13px;font-weight:700;margin:0 0 6px;">(별표5) 총 변제예정(유보)액</div>
+<div style="font-size:12px;font-weight:600;margin:4px 0;">채권자별 총 변제예정(유보)액</div>
+${makeTable(bt5,false)}
+
+<script>window.onload=function(){setTimeout(function(){window.print();},200);};<\/script>
+</body></html>`;
+
+  return openPrintWindow(html, returnOnly);
+}
+
+
+function printRepaymentSchedulePriority(returnOnly=false){
+  const data = computeRepaymentSchedule();
+  const liquidation = getLiquidationValueForPlan();
+  const rp = state.repaymentPlan;
+  const baseMethod = rp.method === 'principalInterest100' ? '원리금' : '원금';
+  const credNums = computeDisplayNumbers();
+
+  // 실제 가용소득 계산
+  const feeRate     = Number(rp.committeeFeeRate) || 0;
+  const monthlyFee  = rp.hasExternalCommittee ? Math.round(data.monthlyAvailable * feeRate / 100) : 0;
+  const actualM     = Math.max(0, data.monthlyAvailable - monthlyFee);
+  const totalMonths = Number(data.months) || 36;
+
+  // 채권 분류
+  const priCreds = state.creditors.filter(c => c.claimType === '우선' && c.name);
+  const genCreds = state.creditors.filter(c => c.claimType !== '우선' && c.name);
+
+  // 금액 헬퍼
+  const isFut = cr => cr.natureType === '장래구상채권';
+  const getAmt = cr => isFut(cr) ? 0 : (Number(cr.principal)||0)+(Number(cr.interest)||0);
+  const getConf = cr => {
+    if(isFut(cr)||cr.hasAttachment) return 0;
+    return Number(cr.principal)||0;
+  };
+  const getUnconf = cr => {
+    if(isFut(cr)||!cr.hasAttachment||!cr.attachmentType1) return 0;
+    return Math.max(0, getAmt(cr) - (Number(cr.attachmentType1.amount)||0));
+  };
+
+  const totalPri = priCreds.reduce((s,c) => s+getAmt(c), 0);
+  const totalGen = genCreds.reduce((s,c) => s+getConf(c)+getUnconf(c), 0);
+
+  // 페이즈 계산
+  const K = (totalPri>0&&actualM>0) ? Math.ceil(totalPri/actualM) : 1;
+  const p1Months = Math.max(0, K-1);
+  const p3Months = Math.max(0, totalMonths-K);
+  const priRem   = totalPri - p1Months*actualM;   // K회에서 우선채권 잔여
+  const genAvail2 = Math.max(0, actualM - priRem); // K회에서 일반채권 가용액
+
+  // 별표1 rows (우선채권, 1~K-1회)
+  const bt1 = priCreds.map(cr => {
+    const amt = getAmt(cr);
+    const mConf = totalPri>0 ? Math.round(amt/totalPri*actualM) : 0;
+    return {id:cr.id, cr, conf:getConf(cr), unconf:getUnconf(cr),
+            mConf, mUnconf:0, tConf:mConf*p1Months, tUnconf:0};
+  });
+
+  // 별표2 rows (K회 - 우선채권 잔여 + 일반채권 시작)
+  const bt2pri = priCreds.map(cr => {
+    const b1 = bt1.find(r=>r.id===cr.id);
+    const rem = Math.max(0, getAmt(cr)-(b1?.tConf||0));
+    return {id:cr.id, cr, conf:getConf(cr), unconf:getUnconf(cr),
+            mConf:rem, mUnconf:0, tConf:rem, tUnconf:0};
+  });
+  const bt2gen = genCreds.map(cr => {
+    const conf=getConf(cr), unconf=getUnconf(cr), tot=conf+unconf;
+    const mConf  = totalGen>0&&conf>0  ? Math.round(conf/totalGen*genAvail2)  : 0;
+    const mUnconf= totalGen>0&&unconf>0 ? Math.round(unconf/totalGen*genAvail2) : 0;
+    return {id:cr.id, cr, conf, unconf, mConf, mUnconf, tConf:mConf, tUnconf:mUnconf};
+  });
+
+  // 별표3 rows (일반채권, K+1~N회)
+  const bt3 = genCreds.map(cr => {
+    const conf=getConf(cr), unconf=getUnconf(cr);
+    const mConf  = totalGen>0&&conf>0  ? Math.round(conf/totalGen*actualM)  : 0;
+    const mUnconf= totalGen>0&&unconf>0 ? Math.round(unconf/totalGen*actualM) : 0;
+    return {id:cr.id, cr, conf, unconf, mConf, mUnconf,
+            tConf:mConf*p3Months, tUnconf:mUnconf*p3Months};
+  });
+
+  // 별표4 rows (전체, 월 공란, 합산)
+  const allCreds = [...priCreds, ...genCreds];
+  const bt4 = allCreds.map(cr => {
+    const b1 = bt1.find(r=>r.id===cr.id);
+    const b2p= bt2pri.find(r=>r.id===cr.id);
+    const b2g= bt2gen.find(r=>r.id===cr.id);
+    const b3 = bt3.find(r=>r.id===cr.id);
+    const tC=(b1?.tConf||0)+(b2p?.tConf||0)+(b2g?.tConf||0)+(b3?.tConf||0);
+    const tU=(b1?.tUnconf||0)+(b2p?.tUnconf||0)+(b2g?.tUnconf||0)+(b3?.tUnconf||0);
+    return {id:cr.id, cr, conf:getConf(cr), unconf:getUnconf(cr),
+            mConf:null, mUnconf:null, tConf:tC, tUnconf:tU};
+  });
+
+  // 현재가치
+  const rv=0.05/12, rn=totalMonths, rm=Math.max(0,rn-3);
+  const lei = rm>0 ? 3+(1-Math.pow(1+rv,-rm))/rv : rn;
+  const pv  = Math.round(actualM*lei);
+  const totalRepay4 = bt4.reduce((s,r)=>s+r.tConf+r.tUnconf,0);
+
+  const fmt = n => n!=null ? n.toLocaleString('ko-KR') : '';
+
+  // 스타일 상수
+  const TH  = 'border:1px solid #333;padding:5px 7px;text-align:center;background:#f2f2f2;font-weight:600;font-size:11px;';
+  const TH2 = 'border:1px solid #333;padding:4px 6px;text-align:center;background:#f2f2f2;font-weight:500;font-size:10px;';
+  const TDC = 'border:1px solid #333;padding:4px 7px;text-align:center;height:30px;vertical-align:middle;font-size:11px;';
+  const TDL = 'border:1px solid #333;padding:4px 7px;text-align:left;height:30px;vertical-align:middle;font-size:11px;';
+  const TDR = 'border:1px solid #333;padding:4px 7px;text-align:right;height:30px;vertical-align:middle;font-size:11px;';
+  const FT  = 'border:1px solid #333;padding:5px 7px;text-align:right;font-weight:bold;font-size:11px;';
+  const FTC = 'border:1px solid #333;padding:5px 7px;text-align:center;font-weight:bold;font-size:11px;';
+
+  // 테이블 헤더
+  const makeHeader = () => `<thead>
+    <tr>
+      <th style="${TH}width:6%;" rowspan="2">채권<br>번호</th>
+      <th style="${TH}width:18%;" rowspan="2">채권자</th>
+      <th style="${TH}" colspan="2">(D) 개인회생채권액</th>
+      <th style="${TH}" colspan="2">(E) 월 변제예정(유보)액</th>
+      <th style="${TH}" colspan="2">(F) 총 변제예정(유보)액</th>
+    </tr>
+    <tr>
+      <th style="${TH2}">확정채권액<br>[${baseMethod}]</th>
+      <th style="${TH2}">미확정채권액<br>[${baseMethod}]</th>
+      <th style="${TH2}">확정채권액<br>[${baseMethod}]</th>
+      <th style="${TH2}">미확정채권액<br>[${baseMethod}]</th>
+      <th style="${TH2}">확정채권액<br>[${baseMethod}]</th>
+      <th style="${TH2}">미확정채권액<br>[${baseMethod}]</th>
+    </tr></thead>`;
+
+  // 데이터 행
+  const makeRows = (rows, showM) => rows.map(r => `<tr>
+    <td style="${TDC}">${credNums[r.id]||''}</td>
+    <td style="${TDL}">${escapeHtml(r.cr.name)}</td>
+    <td style="${TDR}">${isFut(r.cr)?'미발생':fmt(r.conf)}</td>
+    <td style="${TDR}">${r.unconf?fmt(r.unconf):''}</td>
+    <td style="${TDR}">${showM&&r.mConf!=null?fmt(r.mConf):''}</td>
+    <td style="${TDR}">${showM&&r.mUnconf!=null&&r.mUnconf?fmt(r.mUnconf):''}</td>
+    <td style="${TDR}">${fmt(r.tConf)}</td>
+    <td style="${TDR}">${r.tUnconf?fmt(r.tUnconf):''}</td>
+  </tr>`).join('');
+
+  // 합계행
+  const makeFoot = (rows) => {
+    const sc=rows.reduce((s,r)=>s+r.tConf,0), su=rows.reduce((s,r)=>s+r.tUnconf,0);
+    const mc=rows.reduce((s,r)=>s+(r.mConf||0),0), mu=rows.reduce((s,r)=>s+(r.mUnconf||0),0);
+    const dc=rows.reduce((s,r)=>s+r.conf,0), du=rows.reduce((s,r)=>s+r.unconf,0);
+    return `<tfoot>
+    <tr>
+      <td colspan="2" style="${FTC}background:#f7f7f7;">합계</td>
+      <td style="${FT}background:#f7f7f7;">${fmt(dc)}</td>
+      <td style="${FT}background:#f7f7f7;">${du?fmt(du):''}</td>
+      <td style="${FT}background:#f7f7f7;">${mc?fmt(mc):''}</td>
+      <td style="${FT}background:#f7f7f7;">${mu?fmt(mu):''}</td>
+      <td style="${FT}background:#f7f7f7;">${fmt(sc)}</td>
+      <td style="${FT}background:#f7f7f7;">${su?fmt(su):''}</td>
+    </tr>
+    <tr>
+      <td colspan="2" style="${FTC}background:#eee;">총계</td>
+      <td colspan="2" style="${FT}background:#eee;">${fmt(dc+du)}</td>
+      <td colspan="2" style="${FT}background:#eee;">${mc+mu?fmt(mc+mu):''}</td>
+      <td colspan="2" style="${FT}background:#eee;">${fmt(sc+su)}</td>
+    </tr></tfoot>`;
+  };
+
+  // 기초사항 표
+  const makeBasic = (monthly, months, total, isMainPage=false) => {
+    const BH2 = 'border:1px solid #333;padding:6px;text-align:center;background:#f2f2f2;font-weight:600;font-size:11px;';
+    const BV2 = 'border:1px solid #333;padding:6px;text-align:right;font-size:11px;';
+    const BN2 = 'border:none;padding:0;';
+    const BLR2 = 'border-left:none;border-right:none;border-top:1px solid #333;border-bottom:1px solid #333;padding:0;height:4px;';
+    const colgroup = `<colgroup><col style="width:20%"><col style="width:15%"><col style="width:3%">
+      <col style="width:13%"><col style="width:12%"><col style="width:3%">
+      <col style="width:18%"><col style="width:16%"></colgroup>`;
+    const header = `<div style="display:flex;justify-content:space-between;margin:6px 0 5px;">
+    <span style="font-size:12px;font-weight:700;">1. 기초사항</span>
+    <span style="font-size:10px;">(단위: 원)</span>
+  </div>`;
+    const tableWrap = inner => `<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:6px;table-layout:fixed;">${colgroup}<tbody>${inner}</tbody></table>`;
+
+    if(rp.hasExternalCommittee && isMainPage){
+      // 3줄형: ③월평균 가용소득 / ④회생위원 보수 → (A)(B)(C)
+      const SPC2 = 'border:none;padding:0;width:2%;';
+      return header + tableWrap(`
+        <tr>
+          <td style="${BH2}">③ 월평균 가용소득</td>
+          <td style="${BV2}">${fmt(data.monthlyAvailable)}</td>
+          <td style="${SPC2}"></td>
+          <td style="${BH2}">④ 월 회생위원 보수</td>
+          <td style="${BV2}">${fmt(monthlyFee)}</td>
+          <td style="${BN2}" colspan="3"></td>
+        </tr>
+        <tr style="height:4px;">
+          <td style="${BLR2}" colspan="2"></td>
+          <td style="${BN2}"></td>
+          <td style="${BN2}" colspan="2"></td>
+          <td style="${BN2}" colspan="3"></td>
+        </tr>
+        <tr>
+          <td style="${BH2}">(A) 월 실제가용소득<br>(③-④)</td>
+          <td style="${BV2}">${fmt(monthly)}</td>
+          <td style="${SPC2}"></td>
+          <td style="${BH2}">(B) 변제횟수</td>
+          <td style="${BV2}">${months}회</td>
+          <td style="${SPC2}"></td>
+          <td style="${BH2}">(C) 총 실제가용소득</td>
+          <td style="${BV2}">${fmt(total)}</td>
+        </tr>`);
+    }
+    // 기본형 1줄
+    return header + tableWrap(`<tr>
+      <td style="${BH2}">(A) 월 실제가용소득</td>
+      <td style="${BV2}">${fmt(monthly)}</td>
+      <td style="${BN2}"></td>
+      <td style="${BH2}">(B) 변제횟수</td>
+      <td style="${BV2}">${months}회</td>
+      <td style="${BN2}"></td>
+      <td style="${BH2}">(C) 총 가용소득</td>
+      <td style="${BV2}">${fmt(total)}</td>
+    </tr>`);
+  };
+
+  // 채권자 표
+  const makeTable = (rows, showM) => `
+  <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:6px;">
+    ${makeHeader()}
+    <tbody>${makeRows(rows,showM)}</tbody>
+    ${makeFoot(rows)}
+  </table>`;
+
+  // 4항 청산가치 표
+  const liquidTable = () => `
+  <div style="margin:12px 0 0;"><span style="font-size:12px;font-weight:700;">4. 청산가치와의 비교</span></div>
+  <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:5px;table-layout:fixed;">
+    <thead><tr>
+      <td colspan="3" style="border:none;padding:0;"></td>
+      <td colspan="2" style="border:none;padding:2px 0;text-align:right;font-size:9.5px;color:#555;">(단위: 원)</td>
+      <td style="border:none;padding:0;"></td>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td style="border:1px solid #333;padding:6px;text-align:center;background:#f2f2f2;font-weight:600;height:38px;vertical-align:middle;" rowspan="2">(J) 청산가치</td>
+        <td style="border:1px solid #333;padding:6px;text-align:right;" rowspan="2">${fmt(liquidation)}</td>
+        <td style="border:none;padding:0;" rowspan="2"></td>
+        <td style="border:1px solid #333;padding:6px;text-align:center;background:#f2f2f2;font-weight:600;height:38px;vertical-align:middle;">(K) 총 변제예정(유보)액</td>
+        <td style="border:1px solid #333;padding:6px;text-align:right;">${fmt(totalRepay4)}</td>
+        <td style="border-left:1px solid #333;border-top:none;border-bottom:none;border-right:none;padding:0;"></td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #333;padding:6px;text-align:center;background:#f2f2f2;font-weight:600;height:38px;vertical-align:middle;">(L) 현재가치</td>
+        <td style="border:1px solid #333;padding:6px;text-align:right;">${fmt(pv)}</td>
+        <td style="border-left:1px solid #333;border-top:none;border-bottom:none;border-right:none;padding:0;"></td>
+      </tr>
+    </tbody>
+  </table>`;
+
+  const css = `<style>
+    body{font-family:'Malgun Gothic','맑은 고딕',sans-serif;font-size:12px;padding:12px;}
+    h1{text-align:center;font-size:17px;margin:0 0 12px;letter-spacing:2px;}
+    @media print{body{padding:10px;} .pb{page-break-after:always;}}
+  </style>`;
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">${css}</head><body>
+
+<h1>개인회생채권 변제예정액 표</h1>
+
+${makeBasic(actualM, totalMonths, actualM*totalMonths, true)}
+
+<div style="display:flex;justify-content:space-between;margin:14px 0 6px;">
+  <span style="font-size:13px;font-weight:700;">2. 채권자별 변제예정액의 산정내역</span>
+</div>
+<div style="margin-left:14px;font-size:12px;line-height:2;">
+  <div>가. 제1회부터 제${p1Months}회까지 월 변제예정(유보)액 산정내역</div>
+  <div style="margin-left:24px;">(별표1)과 같음.</div>
+  <div>나. 제${K}회 월 변제예정(유보)액 산정내역</div>
+  <div style="margin-left:24px;">(별표2)와 같음.</div>
+  <div>다. 제${K+1}회부터 제${totalMonths}회까지 월 변제예정(유보)액 산정내역</div>
+  <div style="margin-left:24px;">(별표3)과 같음.</div>
+  <div>라. 총 변제예정(유보)액</div>
+  <div style="margin-left:24px;">(별표4)와 같음.</div>
+</div>
+
+<div style="margin:12px 0 5px;font-size:13px;">
+  <span style="font-weight:700;">3. 변제율</span>
+  <span style="margin-left:14px;letter-spacing:0.5px;"><b>[${baseMethod}]</b> 기준 &nbsp;&nbsp; <b>${data.repayRate.toFixed(2)}%</b> &nbsp;상당액</span>
+</div>
+
+${liquidTable()}
+
+<div class="pb"></div>
+
+<!-- 별표1 -->
+<div style="font-size:13px;font-weight:700;margin:0 0 6px;">(별표1) 제1회부터 제${p1Months}회까지 월 변제예정(유보)액 산정내역</div>
+<div style="font-size:12px;font-weight:600;margin:6px 0 4px;">2. 채권자별 변제예정(유보)액의 산정내역</div>
+${makeTable(bt1, true)}
+
+<div class="pb"></div>
+
+<!-- 별표2 -->
+<div style="font-size:13px;font-weight:700;margin:0 0 6px;">(별표2) 제${K}회 월 변제예정(유보)액 산정내역</div>
+<div style="font-size:12px;font-weight:600;margin:6px 0 4px;">2. 채권자별 변제예정(유보)액의 산정내역</div>
+${makeTable([...bt2pri,...bt2gen], true)}
+
+<div class="pb"></div>
+
+<!-- 별표3 -->
+<div style="font-size:13px;font-weight:700;margin:0 0 6px;">(별표3) 제${K+1}회부터 제${totalMonths}회까지 월 변제예정(유보)액 산정내역</div>
+<div style="font-size:12px;font-weight:600;margin:6px 0 4px;">2. 채권자별 변제예정(유보)액의 산정내역</div>
+${makeTable(bt3, true)}
+
+<div class="pb"></div>
+
+<!-- 별표4 -->
+<div style="font-size:13px;font-weight:700;margin:0 0 6px;">(별표4) 총 변제예정(유보)액</div>
+<div style="font-size:12px;font-weight:600;margin:6px 0 4px;">채권자별 총 변제예정(유보)액</div>
+${makeTable(bt4, false)}
+
+<script>window.onload=function(){setTimeout(function(){window.print();},200);};<\/script>
+</body></html>`;
+
+  return openPrintWindow(html, returnOnly);
+}
+
 
 function printIncomeExpense(){
   const inc = state.income;
@@ -4534,14 +6117,7 @@ function printIncomeExpense(){
   <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 200); };<\/script>
 </body></html>`;
 
-  const printWin = window.open('', '_blank');
-  if(!printWin){
-    alert('팝업이 차단되었습니다. 브라우저의 팝업 차단을 해제해주세요.');
-    return;
-  }
-  printWin.document.open();
-  printWin.document.write(html);
-  printWin.document.close();
+  return openPrintWindow(html, false);
 }
 
 function bindIncome(){
@@ -5056,14 +6632,7 @@ function printAssetList(){
   <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 200); };<\/script>
 </body></html>`;
 
-  const printWin = window.open('', '_blank');
-  if(!printWin){
-    alert('팝업이 차단되었습니다. 브라우저의 팝업 차단을 해제해주세요.');
-    return;
-  }
-  printWin.document.open();
-  printWin.document.write(html);
-  printWin.document.close();
+  return openPrintWindow(html, false);
 }
 
 function printInsuranceStatus(){
@@ -5126,64 +6695,7 @@ function printInsuranceStatus(){
   <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 200); };<\/script>
 </body></html>`;
 
-  const printWin = window.open('', '_blank');
-  if(!printWin){
-    alert('팝업이 차단되었습니다. 브라우저의 팝업 차단을 해제해주세요.');
-    return;
-  }
-  printWin.document.open();
-  printWin.document.write(html);
-  printWin.document.close();
-}
-
-function openModal(id){ document.getElementById(id).classList.add('open'); }
-function closeModal(id){ document.getElementById(id).classList.remove('open'); }
-function bindCubeModals(){
-  // 인적사항 큐브
-  document.getElementById('cubeCareer').addEventListener('click', () => openModal('careerModalOverlay'));
-  document.getElementById('cubeHousing').addEventListener('click', () => openModal('housingModalOverlay'));
-  document.getElementById('cubeFamily').addEventListener('click', () => openModal('familyModalOverlay'));
-  document.getElementById('cubeMarriage').addEventListener('click', () => openModal('marriageModalOverlay'));
-  [
-    ['careerModalClose','careerModalDone','careerModalOverlay'],
-    ['housingModalClose','housingModalDone','housingModalOverlay'],
-    ['familyModalClose','familyModalDone','familyModalOverlay'],
-  ].forEach(([closeBtn, doneBtn, overlayId]) => {
-    document.getElementById(closeBtn).addEventListener('click', () => closeModal(overlayId));
-    document.getElementById(doneBtn).addEventListener('click', () => closeModal(overlayId));
-    document.getElementById(overlayId).addEventListener('click', e => {
-      if(e.target.id === overlayId) closeModal(overlayId);
-    });
-  });
-
-  // 재산목록 큐브
-  const assetCubes = [
-    ['cubeCash','cashModalOverlay'],['cubeDeposit','depositModalOverlay'],
-    ['cubeInsurance','insuranceModalOverlay'],['cubeVehicle','vehicleModalOverlay'],
-    ['cubeLease','leaseModalOverlay'],['cubeRealty','realtyModalOverlay'],
-    ['cubeEquip','equipModalOverlay'],['cubeLoanRec','loanRecModalOverlay'],
-    ['cubeSalesRec','salesRecModalOverlay'],['cubeSeverance','severanceModalOverlay'],
-    ['cubeOther','otherModalOverlay'],['cubeExemption','exemptionModalOverlay'],
-  ];
-  assetCubes.forEach(([cubeId, overlayId]) => {
-    const cube = document.getElementById(cubeId);
-    if(cube) cube.addEventListener('click', () => openModal(overlayId));
-    const overlay = document.getElementById(overlayId);
-    if(overlay){
-      const base = overlayId.replace('Overlay','');
-      const closeBtn = document.getElementById(base+'Close');
-      const doneBtn = document.getElementById(base+'Done');
-      if(closeBtn) closeBtn.addEventListener('click', () => closeModal(overlayId));
-      if(doneBtn) doneBtn.addEventListener('click', () => closeModal(overlayId));
-      overlay.addEventListener('click', e => { if(e.target.id === overlayId) closeModal(overlayId); });
-    }
-  });
-
-  // ESC 키 — 열려있는 모달 전체 닫기
-  document.addEventListener('keydown', e => {
-    if(e.key !== 'Escape') return;
-    document.querySelectorAll('.modal-overlay.open').forEach(el => el.classList.remove('open'));
-  });
+  return openPrintWindow(html, false);
 }
 
 function bindBasicInputs(){
@@ -5215,18 +6727,6 @@ function bindBasicInputs(){
   document.getElementById('debtorName').addEventListener('input', e => { state.debtor.name = e.target.value; save(); });
   document.getElementById('debtorRRN').addEventListener('input', e => { state.debtor.rrn = e.target.value; save(); });
   document.getElementById('debtorPhone').addEventListener('input', e => { state.debtor.phone = e.target.value; save(); });
-  document.getElementById('debtorEduSchool').addEventListener('input', e => { state.debtor.finalEducation.school = e.target.value; save(); });
-  document.getElementById('debtorEduDate').addEventListener('change', e => {
-    const raw = e.target.value.trim();
-    if(!raw){ state.debtor.finalEducation.date=''; e.target.classList.remove('date-error'); save(); return; }
-    const parsed = parseFlexibleDate(raw);
-    if(parsed===null){ e.target.classList.add('date-error'); save(); return; }
-    state.debtor.finalEducation.date = parsed;
-    e.target.value = fmtDateInputDisplay(parsed);
-    e.target.classList.remove('date-error');
-    save();
-  });
-  document.getElementById('debtorEduStatus').addEventListener('change', e => { state.debtor.finalEducation.status = e.target.value; save(); });
   document.getElementById('debtorRegAddr').addEventListener('input', e => {
     state.debtor.regAddress = e.target.value;
     if(state.debtor.sameAsReg){
@@ -6017,14 +7517,7 @@ function printCreditorList(){
   <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 200); };<\/script>
 </body></html>`;
 
-  const printWin = window.open('', '_blank');
-  if(!printWin){
-    alert('팝업이 차단되었습니다. 브라우저의 팝업 차단을 해제해주세요.');
-    return;
-  }
-  printWin.document.open();
-  printWin.document.write(html);
-  printWin.document.close();
+  return openPrintWindow(html, false);
 }
 
 function bindActions(){
@@ -6070,7 +7563,7 @@ function bindActions(){
     state = {
       procedureType: '회생', court:'', caseNumber:'', courtDivision:'', repayStartDate:'', bankName:'', bankAccount:'',
       filingDate:'', commencementDate:'', confirmationDate:'', repayBankName:'', repayBankAccount:'', draftDate:'',
-      debtor: { name:'', rrn:'', phone:'', regAddress:'', currentAddress:'', sameAsReg:true, zip:'', finalEducation: { date:'', status:'졸업', school:'' } },
+      debtor: { name:'', rrn:'', phone:'', regAddress:'', currentAddress:'', sameAsReg:true, zip:'' },
       creditors: [newCreditorRow()],
       family: [],
       marriageHistory: [],
@@ -6083,21 +7576,8 @@ function bindActions(){
         expectedRepayment: '',
         livingExpenseDetail: { food:'', utilities:'', furniture:'', clothing:'', entertainment:'', transport:'', phone:'', housing:'', medical:'', education:'', additionalReason:'', additionalRate:'' }
       },
-      statement: {
-        pastCareers: [],
-        housing: { startDate:'', type:'own', leaseDeposit:'', leaseRent:'', leaseOverdue:'', leaseTenantName:'', relativeOwnerName:'', nonRelativeRelation:'', otherText:'' },
-        hasLegalAction: false, legalActionRows: [],
-        reasonChecks: { livingCost:false, medicalCost:false, education:false, leisure:false, businessFailure:false, guarantee:false, stockLoss:false, fraud:false },
-        reasonEtc: '', detailedStatement: '',
-        pastProcedures: {
-          bankruptcy: { checked:false, court:'', date:'', progress:'' },
-          rehabilitation: { checked:false, court:'', date:'', progress:'' },
-          workout: { checked:false, court:'', date:'', count:'', amount:'' },
-          badBank: { checked:false, court:'', date:'', progress:'' }
-        }
-      },
       repaymentPlan: {
-        method: '36months', months: '36', hasExternalCommittee: false, committeeFeeRate: '',
+        method: '36months', months: '36', seizureFundMonths: '36', assetLiquidationMonths: '36', hasExternalCommittee: false, committeeFeeRate: '', committeePreApprovalFee: '',
         hasPriorityClaim: false,
         seizureFund: { enabled: false, amount: '', round: '1' },
         assetLiquidation: { enabled: false, amount: '', round: '' },
@@ -6119,7 +7599,6 @@ function bindActions(){
 
 load();
 populateCreditorDatalist();
-bindCubeModals();
 bindBasicInputs();
 bindTable();
 bindTabs();
