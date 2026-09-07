@@ -7590,6 +7590,27 @@ function bindActions(){
         severance:{ workplace:'', total:'', isPension:false },
         others:[],
         exemption:[]
+      },
+      statement: {
+        finalEducation: { date: '', status: '졸업' },
+        pastCareers: [],
+        pastMarriageEvents: [],
+        housing: {
+          startDate: '', type: 'own',
+          leaseDeposit: '', leaseRent: '', leaseOverdue: '', leaseTenantName: '',
+          relativeOwnerName: '', nonRelativeRelation: '', otherText: ''
+        },
+        hasLegalAction: false,
+        legalActionRows: [],
+        reasonChecks: { livingCost:false, medicalCost:false, education:false, leisure:false, businessFailure:false, guarantee:false, stockLoss:false, fraud:false },
+        reasonEtc: '',
+        detailedStatement: '',
+        pastProcedures: {
+          bankruptcy: { checked:false, court:'', date:'', progress:'' },
+          rehabilitation: { checked:false, court:'', date:'', progress:'' },
+          workout: { checked:false, court:'', date:'', count:'', amount:'' },
+          badBank: { checked:false, court:'', date:'', progress:'' }
+        }
       }
     };
     renderAll();
